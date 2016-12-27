@@ -135,7 +135,6 @@ var RequestHandler =  function(request, response){
 			fs.readFile(filePath, (err, data) => {
 				if(!err){
 					response.statusCode = 200;
-					response.write(data);
 				} else {
 					response.statusCode = 404;
 				}
@@ -145,7 +144,20 @@ var RequestHandler =  function(request, response){
 			switch(requestUrl.pathname){
 				case '/':
 					response.setHeader('Content-Type', 'text/html');
-					response.statusCode = 200;
+					var filePath = "./index.html";
+					fs.readFile(filePath, 'utf8', (err, data) => {
+						if(!err){
+							response.statusCode = 200;
+							queryDocument("worlds",{} ,(docs)=>{
+								console.log(JSON.stringify(docs));
+								var dataFeeded = data.replace(/<SERVER_REPLACE_WORLDS>/g,JSON.stringify(docs));
+								response.end(dataFeeded);	
+							});
+						} else {
+							response.statusCode = 404;
+							response.end();
+						}
+					});
 				break;
 				case '/api/player':
 					response.setHeader('Content-Type', 'application/json');
