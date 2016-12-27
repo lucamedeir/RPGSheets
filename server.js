@@ -191,8 +191,20 @@ var RequestHandler =  function(request, response){
 									}
 								});
 							} else {
-								response.statusCode = 200;
-								response.end("oi m");
+								var filePath = "./world.html";
+								fs.readFile(filePath, 'utf8', (err, data) => {
+									if(!err){
+										response.statusCode = 200;
+										queryDocument("players",{"world":worldName} ,(docs)=>{
+											console.log(JSON.stringify(docs));
+											var dataFeeded = data.replace(/<SERVER_REPLACE_PLAYERS>/g,JSON.stringify(docs));
+											response.end(dataFeeded);	
+										});
+									} else {
+										response.statusCode = 404;
+										response.end();
+									}
+								});
 							}
 						} else {
 							response.statusCode = 404;

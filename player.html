@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>RPG Sheets</title>
+		<script src="https://unpkg.com/react@15/dist/react.js"></script>
+		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
+		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+	</head>
+
+	<body>
+		<div id="root"></div>
+		<script type="text/babel">
+			function PlayerList(props) {
+			  const players = props.players;
+			  const listItems = players.map((Player) =>
+			    <li key={Player.name}>
+			    	{Player.name}
+			    </li>
+			  );
+			  return (
+			    <ul>{listItems}</ul>
+			  );
+			}
+
+			const players = <SERVER_REPLACE_PLAYERS>;
+			ReactDOM.render(
+			  <PlayerList players={players} />,
+			  document.getElementById('root')
+			);
+		</script>
+	</body>
+
+</html>
