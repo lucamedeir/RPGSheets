@@ -1,0 +1,28 @@
+{
+  "name": "rpgsheets",
+  "version": "0.0.1",
+  "description": "This is a webapp for online RPG sheets (D&D5) developed in node.js, React and mongoDB.",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lucamedeir/rpgsheets.git"
+  },
+  "keywords": [
+    "d&d",
+    "rpg",
+    "sheets"
+  ],
+  "author": "Lucas Medeiros",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/lucamedeir/rpgsheets/issues"
+  },
+  "homepage": "https://github.com/lucamedeir/rpgsheets",
+  "dependencies": {
+    "mongodb": "^2.2.16"
+  }
+}
