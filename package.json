@@ -1,11 +1,13 @@
 {
   "name": "rpgsheets",
-  "version": "0.0.1",
+  "version": "0.0.9",
   "description": "This is a webapp for online RPG sheets (D&D5) developed in node.js, React and mongoDB.",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "test": "echo 'Error: no test specified' && exit 1",
+    "dbstart": " mkdir -p mongodlog &&  touch ./mongodlog/mongod.log && mongod --dbpath dbdata --fork --logpath mongodlog/mongod.log ",
+    "start": "node server.js",
+    "dbstop": "mongo admin --eval 'db.shutdownServer()' "
   },
   "repository": {
     "type": "git",
