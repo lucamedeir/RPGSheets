@@ -45,7 +45,22 @@ var removeDocument = function(collection, query, callback) {
 	});
 };
 
-var APIRequestHandler = function(method,collection,getCallback,getData,postCallback,postData,deleteCallback,deleteData){
+var updateDocument = function(collection, query, data, callback) {
+   globalDB.collection(collection).updateOne(query,
+      {
+        $set: data,
+        $currentDate: { "lastModified": true }
+      }, function(err, results) {
+		assert.equal(err, null);
+      callback(results);
+   });
+};
+
+var APIRequestHandler = function(method,collection,
+								 getCallback,getData,
+								 postCallback,postData,
+								 deleteCallback,deleteData,
+								 updateCallback,updateData,updateQuery){
 	switch(method) {
 		case 'GET':
 			queryDocument(collection,getData ,getCallback);
@@ -56,22 +71,33 @@ var APIRequestHandler = function(method,collection,getCallback,getData,postCallb
 		case 'DELETE':
 			removeDocument(collection,deleteData, deleteCallback);
 		break;
+		case 'PATCH':
+			updateDocument(collection,updateQuery,updateData,updateCallback);
+		break;
 	};
 };
 
-var APIHandler = function(method,collection,query,postData,response){
+var APIHandler = function(method,collection,query,jsonData,response){
 	APIRequestHandler(method,collection,(getDocs)=>{
 											response.statusCode = 200;
 											response.end(JSON.stringify(getDocs));
 										},query,
 										(postResults)=>{
-											response.statusCode = 201;
+											if(postResults.ok) {
+												response.statusCode = 201;
+											} else {
+												response.statusCode = 204;
+											}
 											response.end(JSON.stringify(postResults));
-										},postData,
+										},jsonData.post,
 										(deleteResults) =>{
 											response.statusCode = 200;
 											response.end(JSON.stringify(deleteResults));
-										},query);
+										},query,
+										(updateResults) =>{
+											response.statusCode = 200;
+											response.end(JSON.stringify(updateResults));
+										},jsonData.post,jsonData.query);
 }
 
 
@@ -84,9 +110,9 @@ var RequestHandler =  function(request, response){
 		requestData += chunk;
 	});
 	request.on('end',()=>{
-		var postData = "";
+		var jsonData = "";
 		if(requestData){
-			postData = JSON.parse(requestData);
+			jsonData = JSON.parse(requestData);
 		}
 		console.log(method + " " +requestUrl.pathname);
 
@@ -123,15 +149,15 @@ var RequestHandler =  function(request, response){
 				break;
 				case '/api/player':
 					response.setHeader('Content-Type', 'application/json');
-					APIHandler(method,"players",requestUrl.query,postData,response);
+					APIHandler(method,"players",requestUrl.query,jsonData,response);
 				break;
 				case '/api/world':
 					response.setHeader('Content-Type', 'application/json');
-					APIHandler(method,"worlds",requestUrl.query,postData,response);
+					APIHandler(method,"worlds",requestUrl.query,jsonData,response);
 				break;
 				case '/api/feature':
 					response.setHeader('Content-Type', 'application/json');
-					APIHandler(method,"features",requestUrl.query,postData,response);
+					APIHandler(method,"features",requestUrl.query,jsonData,response);
 				break;
 				default:
 					response.setHeader('Content-Type', 'text/html');
