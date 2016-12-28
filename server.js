@@ -26,34 +26,30 @@ var globalDB;
 
 var insertDocument = function(collection,data, callback) {
 	globalDB.collection(collection).insertOne( data, function(err, results) {
-		assert.equal(err, null);
-		callback(results);
+		callback(err,results);
 	});
 };
 
 var queryDocument = function(collection, query, callback) {
 	globalDB.collection(collection).find(query).toArray(function(err,docs){
-		assert.equal(err, null);
-		callback(docs);
+		callback(err, docs);
 	});
 };
 
 var removeDocument = function(collection, query, callback) {
 	globalDB.collection(collection).deleteOne(query, function(err, results) {
-		assert.equal(err, null);
-		callback(results);
+		callback(err,results);
 	});
 };
 
 var updateDocument = function(collection, query, data, callback) {
-   globalDB.collection(collection).updateOne(query,
-      {
-        $set: data,
-        $currentDate: { "lastModified": true }
-      }, function(err, results) {
-		assert.equal(err, null);
-      callback(results);
-   });
+	globalDB.collection(collection).updateOne(query,
+		{
+			$set: data,
+			$currentDate: { "lastModified": true }
+		}, function(err, results) {
+		callback(err,results);
+	});
 };
 
 var APIRequestHandler = function(method,collection,
@@ -78,11 +74,11 @@ var APIRequestHandler = function(method,collection,
 };
 
 var APIHandler = function(method,collection,query,jsonData,response){
-	APIRequestHandler(method,collection,(getDocs)=>{
+	APIRequestHandler(method,collection,(err,getDocs)=>{
 											response.statusCode = 200;
 											response.end(JSON.stringify(getDocs));
 										},query,
-										(postResults)=>{
+										(err,postResults)=>{
 											if(postResults.ok) {
 												response.statusCode = 201;
 											} else {
@@ -90,23 +86,25 @@ var APIHandler = function(method,collection,query,jsonData,response){
 											}
 											response.end(JSON.stringify(postResults));
 										},jsonData.post,
-										(deleteResults) =>{
+										(err,deleteResults) =>{
 											response.statusCode = 200;
 											response.end(JSON.stringify(deleteResults));
 										},query,
-										(updateResults) =>{
+										(err,updateResults) =>{
 											response.statusCode = 200;
 											response.end(JSON.stringify(updateResults));
 										},jsonData.post,jsonData.query);
 };
 
-var PageHandler = function(statusCode,response, filename){
+var PageHandler = function(statusCode,response, filename, DataHandler){
 	response.statusCode = statusCode;
 	switch(statusCode){
 		case 200:
-			fs.readFile(filename, (err, data) => {
-				console.log(err);
+			fs.readFile(filename, 'utf8', (err, data) => {
 				if(!err){
+					if(DataHandler) {
+						data = DataHandler(data);
+					}
 					response.end(data);
 				} else {
 					if(err.code === "ENOENT") {
@@ -118,10 +116,12 @@ var PageHandler = function(statusCode,response, filename){
 			});
 		break;
 		case 404:
-			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>');
+			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8">\ 
+				<title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>');
 		break;
 		case 500:
-			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>500 Internal Server Error</title></head><body><h1>Internal Server Error</h1></body></html>');
+			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8">\ 
+				<title>500 Internal Server Error</title></head><body><h1>Internal Server Error</h1></body></html>');
 		break;
 		default:
 		break;
@@ -165,16 +165,14 @@ var RequestHandler =  function(request, response){
 				case '/':
 					response.setHeader('Content-Type', 'text/html');
 					var filePath = "./index.html";
-					fs.readFile(filePath, 'utf8', (err, data) => {
+					queryDocument("worlds",{} ,(err, docs)=>{
 						if(!err){
-							queryDocument("worlds",{} ,(docs)=>{
-								docs.map((doc)=>{
-									doc.url = "http://localhost:8080/"+doc.name;
-								});
-								var dataFeeded = data.replace(/<SERVER_REPLACE_WORLDS>/g,JSON.stringify(docs));
-								response.statusCode = 200;
-								response.end(dataFeeded);
+							docs.map((doc)=>{
+								doc.url = "http://localhost:8080/"+doc.name;
 							});
+							PageHandler(200,response,filePath,(page) => {
+								return page.replace(/<SERVER_REPLACE_WORLDS>/g,JSON.stringify(docs));
+							});	
 						} else {
 							PageHandler(404,response);
 						}
@@ -199,32 +197,35 @@ var RequestHandler =  function(request, response){
 					var worldName = urlParts[1];
 					var playerName = urlParts[2];
 
-					queryDocument('worlds',{"name":worldName},(docs)=>{
+					queryDocument('worlds',{"name":worldName},(err,docs)=>{
 						if(docs.length) {
 							if(playerName){
-								queryDocument('players',{"name":playerName,"world":worldName},(docs)=>{
+								var filePath = "./player.html";
+								queryDocument('players',{"name":playerName,"world":worldName},(err,doc)=>{
 									if(docs.length) {
-										response.statusCode = 200;
-										response.end("oi");
+										if(!err) {
+											PageHandler(200,response,filePath,(page)=>{
+												return page.replace(/<SERVER_REPLACE_PLAYER>/g,JSON.stringify(doc[0]));
+											});
+										} else {
+											PageHandler(404,response);	
+										}
 									}else{
 										PageHandler(404,response);
 									}
 								});
 							} else {
 								var filePath = "./world.html";
-								fs.readFile(filePath, 'utf8', (err, data) => {
-									if(!err){
-										response.statusCode = 200;
-										queryDocument("players",{"world":worldName} ,(docs)=>{
-											docs.map((doc)=>{
-												doc.url = "http://localhost:8080/"+worldName+"/"+doc.name;
-											});
-											console.log(JSON.stringify(docs));
-											var dataFeeded = data.replace(/<SERVER_REPLACE_PLAYERS>/g,JSON.stringify(docs));
-											response.end(dataFeeded);	
+								queryDocument("players",{"world":worldName} ,(err,docs)=>{
+									if(!err) {
+										docs.map((doc)=>{
+											doc.url = "http://localhost:8080/"+worldName+"/"+doc.name;
+										});
+										PageHandler(200,response,filePath,(page)=>{
+											return page.replace(/<SERVER_REPLACE_PLAYERS>/g,JSON.stringify(docs));
 										});
 									} else {
-										PageHandler(404,response);
+										PageHandler(404,response);	
 									}
 								});
 							}

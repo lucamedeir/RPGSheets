@@ -2,7 +2,7 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>RPG Sheets</title>
+		<title>Player page</title>
 		<script src="https://unpkg.com/react@15/dist/react.js"></script>
 		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
 		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -11,6 +11,18 @@
 	<body>
 		<div id="root"></div>
 		<script type="text/babel">
+			function Player(props) {
+			  const player = props.player;
+			  return (
+			    <h1>{player.name}</h1>
+			  );
+			}
+
+			const player = <SERVER_REPLACE_PLAYER>;
+			ReactDOM.render(
+			  <Player player={player} />,
+			  document.getElementById('root')
+			);
 		</script>
 	</body>
 
