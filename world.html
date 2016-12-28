@@ -15,7 +15,7 @@
 			  const players = props.players;
 			  const listItems = players.map((Player) =>
 			    <li key={Player.name}>
-			    	{Player.name}
+					<a href={Player.url} target="_top">{Player.name}</a>
 			    </li>
 			  );
 			  return (

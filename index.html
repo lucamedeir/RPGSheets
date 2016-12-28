@@ -15,7 +15,7 @@
 			  const worlds = props.worlds;
 			  const listItems = worlds.map((world) =>
 			    <li key={world.name}>
-			    	{world.name}
+			    	<a href={world.url} target="_top">{world.name}</a>
 			    </li>
 			  );
 			  return (

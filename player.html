@@ -11,23 +11,6 @@
 	<body>
 		<div id="root"></div>
 		<script type="text/babel">
-			function PlayerList(props) {
-			  const players = props.players;
-			  const listItems = players.map((Player) =>
-			    <li key={Player.name}>
-			    	{Player.name}
-			    </li>
-			  );
-			  return (
-			    <ul>{listItems}</ul>
-			  );
-			}
-
-			const players = <SERVER_REPLACE_PLAYERS>;
-			ReactDOM.render(
-			  <PlayerList players={players} />,
-			  document.getElementById('root')
-			);
 		</script>
 	</body>
 

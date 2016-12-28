@@ -98,8 +98,35 @@ var APIHandler = function(method,collection,query,jsonData,response){
 											response.statusCode = 200;
 											response.end(JSON.stringify(updateResults));
 										},jsonData.post,jsonData.query);
-}
+};
 
+var PageHandler = function(statusCode,response, filename){
+	response.statusCode = statusCode;
+	switch(statusCode){
+		case 200:
+			fs.readFile(filename, (err, data) => {
+				console.log(err);
+				if(!err){
+					response.end(data);
+				} else {
+					if(err.code === "ENOENT") {
+						PageHandler(404,response); //TODO: possivel loop aqui	
+					} else {
+						PageHandler(500,response); //TODO: possivel loop aqui	
+					}
+				}
+			});
+		break;
+		case 404:
+			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>');
+		break;
+		case 500:
+			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>500 Internal Server Error</title></head><body><h1>Internal Server Error</h1></body></html>');
+		break;
+		default:
+		break;
+	}
+};
 
 var RequestHandler =  function(request, response){
 	var method = request.method;
@@ -132,14 +159,7 @@ var RequestHandler =  function(request, response){
 			}
 
 			var filePath = "."+requestUrl.pathname;
-			fs.readFile(filePath, (err, data) => {
-				if(!err){
-					response.statusCode = 200;
-				} else {
-					response.statusCode = 404;
-				}
-				response.end();
-			});
+			PageHandler(200,response,filePath);
 		} else {
 			switch(requestUrl.pathname){
 				case '/':
@@ -147,15 +167,16 @@ var RequestHandler =  function(request, response){
 					var filePath = "./index.html";
 					fs.readFile(filePath, 'utf8', (err, data) => {
 						if(!err){
-							response.statusCode = 200;
 							queryDocument("worlds",{} ,(docs)=>{
-								console.log(JSON.stringify(docs));
+								docs.map((doc)=>{
+									doc.url = "http://localhost:8080/"+doc.name;
+								});
 								var dataFeeded = data.replace(/<SERVER_REPLACE_WORLDS>/g,JSON.stringify(docs));
-								response.end(dataFeeded);	
+								response.statusCode = 200;
+								response.end(dataFeeded);
 							});
 						} else {
-							response.statusCode = 404;
-							response.end();
+							PageHandler(404,response);
 						}
 					});
 				break;
@@ -184,10 +205,9 @@ var RequestHandler =  function(request, response){
 								queryDocument('players',{"name":playerName,"world":worldName},(docs)=>{
 									if(docs.length) {
 										response.statusCode = 200;
-										response.end("oi p");
+										response.end("oi");
 									}else{
-										response.statusCode = 404;
-										response.end("err p");
+										PageHandler(404,response);
 									}
 								});
 							} else {
@@ -196,19 +216,20 @@ var RequestHandler =  function(request, response){
 									if(!err){
 										response.statusCode = 200;
 										queryDocument("players",{"world":worldName} ,(docs)=>{
+											docs.map((doc)=>{
+												doc.url = "http://localhost:8080/"+worldName+"/"+doc.name;
+											});
 											console.log(JSON.stringify(docs));
 											var dataFeeded = data.replace(/<SERVER_REPLACE_PLAYERS>/g,JSON.stringify(docs));
 											response.end(dataFeeded);	
 										});
 									} else {
-										response.statusCode = 404;
-										response.end();
+										PageHandler(404,response);
 									}
 								});
 							}
 						} else {
-							response.statusCode = 404;
-							response.end("err m");
+							PageHandler(404,response);
 						}
 					});
 				break;
