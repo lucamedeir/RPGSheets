@@ -74,6 +74,7 @@ var APIRequestHandler = function(method,collection,
 };
 
 var APIHandler = function(method,collection,query,jsonData,response){
+	response.setHeader('Content-Type', 'application/json');
 	APIRequestHandler(method,collection,(err,getDocs)=>{
 											response.statusCode = 200;
 											response.end(JSON.stringify(getDocs));
@@ -108,25 +109,100 @@ var PageHandler = function(statusCode,response, filename, DataHandler){
 					response.end(data);
 				} else {
 					if(err.code === "ENOENT") {
-						PageHandler(404,response); //TODO: possivel loop aqui	
+						PageHandler(404,response);
 					} else {
-						PageHandler(500,response); //TODO: possivel loop aqui	
+						PageHandler(500,response);
 					}
 				}
 			});
 		break;
 		case 404:
-			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8">\ 
-				<title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>');
+			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>');
 		break;
 		case 500:
-			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8">\ 
-				<title>500 Internal Server Error</title></head><body><h1>Internal Server Error</h1></body></html>');
+			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>500 Internal Server Error</title></head><body><h1>Internal Server Error</h1></body></html>');
 		break;
 		default:
 		break;
 	}
 };
+
+var RoutePublic = function(response, pathname) {
+	var imageUrlRegx = /.png/g;
+	var cssUrlRegx = /.css/g;
+	var jsUrlRegx = /.js/g;
+	if(imageUrlRegx.test(pathname)) {
+		response.setHeader('Content-Type', 'image/png');
+	} else if(imageUrlRegx.test(pathname)) {
+		response.setHeader('Content-Type', 'text/css');
+	} else if(imageUrlRegx.test(pathname)) {
+		response.setHeader('Content-Type', 'application/javascript');
+	} else {
+		response.setHeader('Content-Type', 'text/html');
+	}
+
+	var filePath = "."+pathname;
+	PageHandler(200,response,filePath);
+};
+
+var RouteIndex = function(response) {
+	response.setHeader('Content-Type', 'text/html');
+	var filePath = "./index.html";
+	queryDocument("worlds",{} ,(err, docs)=>{
+		if(!err){
+			PageHandler(200,response,filePath,(page) => {
+				docs.map((doc)=>{
+					doc.url = "http://localhost:8080/"+doc.name;
+				});
+				return page.replace(/<SERVER_REPLACE_WORLDS>/g,JSON.stringify(docs));
+			});	
+		} else {
+			PageHandler(404,response);
+		}
+	});
+};
+
+var RouteSheets = function(response,pathname) {
+	response.setHeader('Content-Type', 'text/html');
+	var urlParts = pathname.split(path.sep);
+
+	var worldName = urlParts[1];
+	var playerName = urlParts[2];
+
+	queryDocument('worlds',{"name":worldName},(err,worldDocs)=>{
+		if(worldDocs.length) {
+			if(playerName){
+				var filePath = "./player.html";
+				queryDocument('players',{"name":playerName,"world":worldName},(err,playerDocs)=>{
+					if(!err && playerDocs.length) {
+						PageHandler(200,response,filePath,(page)=>{
+							return page.replace(/<SERVER_REPLACE_PLAYER>/g,JSON.stringify(playerDocs[0]));
+						});
+					}else{
+						PageHandler(404,response);
+					}
+				});
+			} else {
+				var filePath = "./world.html";
+				queryDocument("players",{"world":worldName} ,(err,playerDocs)=>{
+					if(!err) {
+						PageHandler(200,response,filePath,(page)=>{
+							playerDocs.map((player)=>{
+								player.url = "http://localhost:8080/"+worldName+"/"+player.name;
+							});
+							return page.replace(/<SERVER_REPLACE_PLAYERS>/g,JSON.stringify(playerDocs));
+						});
+					} else {
+						PageHandler(404,response);	
+					}
+				});
+			}
+		} else {
+			PageHandler(404,response);
+		}
+	});
+};
+
 
 var RequestHandler =  function(request, response){
 	var method = request.method;
@@ -144,95 +220,24 @@ var RequestHandler =  function(request, response){
 		console.log(method + " " +requestUrl.pathname);
 
 		var publicUrlRegex = /\/public\/([\/-z])+(.png|.css|.js|.html)/g;
-		if(publicUrlRegex.test(requestUrl.pathname)){;
-			var imageUrlRegx = /.png/g;
-			var cssUrlRegx = /.css/g;
-			var jsUrlRegx = /.js/g;
-			if(imageUrlRegx.test(requestUrl.pathname)) {
-				response.setHeader('Content-Type', 'image/png');
-			} else if(imageUrlRegx.test(requestUrl.pathname)) {
-				response.setHeader('Content-Type', 'text/css');
-			} else if(imageUrlRegx.test(requestUrl.pathname)) {
-				response.setHeader('Content-Type', 'application/javascript');
-			} else {
-				response.setHeader('Content-Type', 'text/html');
-			}
-
-			var filePath = "."+requestUrl.pathname;
-			PageHandler(200,response,filePath);
+		if(publicUrlRegex.test(requestUrl.pathname)){
+			RoutePublic(response,requestUrl.pathname);
 		} else {
 			switch(requestUrl.pathname){
 				case '/':
-					response.setHeader('Content-Type', 'text/html');
-					var filePath = "./index.html";
-					queryDocument("worlds",{} ,(err, docs)=>{
-						if(!err){
-							docs.map((doc)=>{
-								doc.url = "http://localhost:8080/"+doc.name;
-							});
-							PageHandler(200,response,filePath,(page) => {
-								return page.replace(/<SERVER_REPLACE_WORLDS>/g,JSON.stringify(docs));
-							});	
-						} else {
-							PageHandler(404,response);
-						}
-					});
+					RouteIndex(response);
 				break;
 				case '/api/player':
-					response.setHeader('Content-Type', 'application/json');
 					APIHandler(method,"players",requestUrl.query,jsonData,response);
 				break;
 				case '/api/world':
-					response.setHeader('Content-Type', 'application/json');
 					APIHandler(method,"worlds",requestUrl.query,jsonData,response);
 				break;
 				case '/api/feature':
-					response.setHeader('Content-Type', 'application/json');
 					APIHandler(method,"features",requestUrl.query,jsonData,response);
 				break;
 				default:
-					response.setHeader('Content-Type', 'text/html');
-					var urlParts = requestUrl.pathname.split(path.sep);
-
-					var worldName = urlParts[1];
-					var playerName = urlParts[2];
-
-					queryDocument('worlds',{"name":worldName},(err,docs)=>{
-						if(docs.length) {
-							if(playerName){
-								var filePath = "./player.html";
-								queryDocument('players',{"name":playerName,"world":worldName},(err,doc)=>{
-									if(docs.length) {
-										if(!err) {
-											PageHandler(200,response,filePath,(page)=>{
-												return page.replace(/<SERVER_REPLACE_PLAYER>/g,JSON.stringify(doc[0]));
-											});
-										} else {
-											PageHandler(404,response);	
-										}
-									}else{
-										PageHandler(404,response);
-									}
-								});
-							} else {
-								var filePath = "./world.html";
-								queryDocument("players",{"world":worldName} ,(err,docs)=>{
-									if(!err) {
-										docs.map((doc)=>{
-											doc.url = "http://localhost:8080/"+worldName+"/"+doc.name;
-										});
-										PageHandler(200,response,filePath,(page)=>{
-											return page.replace(/<SERVER_REPLACE_PLAYERS>/g,JSON.stringify(docs));
-										});
-									} else {
-										PageHandler(404,response);	
-									}
-								});
-							}
-						} else {
-							PageHandler(404,response);
-						}
-					});
+					RouteSheets(response,requestUrl.pathname)
 				break;
 			}
 		}
