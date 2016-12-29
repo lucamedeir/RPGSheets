@@ -23,6 +23,7 @@ var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 
 var globalDB;
+var globalRoutes = [];
 
 var insertDocument = function(collection,data, callback) {
 	globalDB.collection(collection).insertOne( data, function(err, results) {
@@ -127,7 +128,9 @@ var PageHandler = function(statusCode,response, filename, DataHandler){
 	}
 };
 
-var RoutePublic = function(response, pathname) {
+var RoutePublic = function(request, response, data) {
+	var requestUrl = url.parse(request.url,true);
+	var pathname = requestUrl.pathname;
 	var imageUrlRegx = /.png/g;
 	var cssUrlRegx = /.css/g;
 	var jsUrlRegx = /.js/g;
@@ -145,7 +148,7 @@ var RoutePublic = function(response, pathname) {
 	PageHandler(200,response,filePath);
 };
 
-var RouteIndex = function(response) {
+var RouteIndex = function(request,response,data) {
 	response.setHeader('Content-Type', 'text/html');
 	var filePath = "./index.html";
 	queryDocument("worlds",{} ,(err, docs)=>{
@@ -162,9 +165,10 @@ var RouteIndex = function(response) {
 	});
 };
 
-var RouteSheets = function(response,pathname) {
+var RouteSheets = function(request,response,data) {
+	var requestUrl = url.parse(request.url,true);
 	response.setHeader('Content-Type', 'text/html');
-	var urlParts = pathname.split(path.sep);
+	var urlParts = requestUrl.pathname.split(path.sep);
 
 	var worldName = urlParts[1];
 	var playerName = urlParts[2];
@@ -203,6 +207,20 @@ var RouteSheets = function(response,pathname) {
 	});
 };
 
+var RouteApiWorld = function(request, response, data) {
+	var requestUrl = url.parse(request.url,true);
+	APIHandler(request.method,"worlds",requestUrl.query,data,response);
+}
+
+var RouteApiPlayer = function(request, response, data) {
+	var requestUrl = url.parse(request.url,true);
+	APIHandler(request.method,"players",requestUrl.query,data,response);
+}
+
+var RouteApiFeature = function(request, response, data) {
+	var requestUrl = url.parse(request.url,true);
+	APIHandler(request.method,"features",requestUrl.query,data,response);
+}
 
 var RequestHandler =  function(request, response){
 	var method = request.method;
@@ -221,23 +239,23 @@ var RequestHandler =  function(request, response){
 
 		var publicUrlRegex = /\/public\/([\/-z])+(.png|.css|.js|.html)/g;
 		if(publicUrlRegex.test(requestUrl.pathname)){
-			RoutePublic(response,requestUrl.pathname);
+			RoutePublic(request,response,jsonData);
 		} else {
 			switch(requestUrl.pathname){
 				case '/':
-					RouteIndex(response);
+					RouteIndex(request,response,jsonData);
 				break;
 				case '/api/player':
-					APIHandler(method,"players",requestUrl.query,jsonData,response);
+					RouteApiPlayer(request,response,jsonData);
 				break;
 				case '/api/world':
-					APIHandler(method,"worlds",requestUrl.query,jsonData,response);
+					RouteApiWorld(request,response,jsonData);
 				break;
 				case '/api/feature':
-					APIHandler(method,"features",requestUrl.query,jsonData,response);
+					RouteApiFeature(request,response,jsonData);
 				break;
 				default:
-					RouteSheets(response,requestUrl.pathname)
+					RouteSheets(request,response,jsonData)
 				break;
 			}
 		}
@@ -251,6 +269,9 @@ MongoClient.connect(urlMongodb, function(err, db) {
 	console.log("Connected correctly to database.");
 	globalDB = db;
 });
+
+globalRoutes.push({"url":"/","route":RouteIndex});
+globalRoutes.push({"url":"/","route":APIHandler});
 
 var server = http.createServer(RequestHandler);
 
