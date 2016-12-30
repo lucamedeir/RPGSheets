@@ -283,13 +283,13 @@ MongoClient.connect(urlMongodb, function(err, db) {
 	globalDB = db;
 });
 
-globalRoutes.push({"url":/\/\W/g,"route":RouteIndex});
-globalRoutes.push({"url":/\/\w+/g,"route":RouteWorld});
-globalRoutes.push({"url":/\/\w+\/\w+/g,"route":RoutePlayer});
-globalRoutes.push({"url":/\/api\/feature/g,"route":RouteApiFeature});
-globalRoutes.push({"url":/\/api\/world/g,"route":RouteApiWorld});
-globalRoutes.push({"url":/\/api\/player/g,"route":RouteApiPlayer});
-globalRoutes.push({"url":/\/public\/([\/-z])+(.png|.css|.js|.html)/g,"route":RoutePublic});
+globalRoutes.push({"url":/\/\W/,"route":RouteIndex});
+globalRoutes.push({"url":/\/\w+/,"route":RouteWorld});
+globalRoutes.push({"url":/\/\w+\/\w+/,"route":RoutePlayer});
+globalRoutes.push({"url":/\/api\/feature/,"route":RouteApiFeature});
+globalRoutes.push({"url":/\/api\/world/,"route":RouteApiWorld});
+globalRoutes.push({"url":/\/api\/player/,"route":RouteApiPlayer});
+globalRoutes.push({"url":/\/public\/([\/-z])+(.png|.css|.js|.html)/,"route":RoutePublic});
 
 var server = http.createServer(RequestHandler);
 
