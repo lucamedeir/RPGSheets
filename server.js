@@ -204,75 +204,32 @@ var RoutePlayer = function(request,response,data,PageHandler) {
 	});
 };
 
-var APIRequestHandler = function(method,collection,
-								 getCallback,getData,
-								 postCallback,postData,
-								 deleteCallback,deleteData,
-								 updateCallback,updateData,updateQuery){
-	switch(method) {
-		case 'GET':
-			queryDocument(collection,getData ,getCallback);
-		break;
-		case 'POST':
-			insertDocument(collection,postData,postCallback);
-		break;
-		case 'DELETE':
-			removeDocument(collection,deleteData, deleteCallback);
-		break;
-		case 'PATCH':
-			updateDocument(collection,updateQuery,updateData,updateCallback);
-		break;
-	};
-};
-
-var APIHandler = function(method,collection,query,jsonData,response){
-	response.setHeader('Content-Type', 'application/json');
-	APIRequestHandler(method,collection,(err,getDocs)=>{
-											response.statusCode = 200;
-											response.end(JSON.stringify(getDocs));
-										},query,
-										(err,postResults)=>{
-											if(postResults.ok) {
-												response.statusCode = 201;
-											} else {
-												response.statusCode = 204;
-											}
-											response.end(JSON.stringify(postResults));
-										},jsonData.post,
-										(err,deleteResults) =>{
-											response.statusCode = 200;
-											response.end(JSON.stringify(deleteResults));
-										},query,
-										(err,updateResults) =>{
-											response.statusCode = 200;
-											response.end(JSON.stringify(updateResults));
-										},jsonData.post,jsonData.query);
-};
-
 var RouteApiWorld = function(request, response, data, PageHandler) {
+	collection = "worlds";
+	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
 	switch(request.method) {
 		case 'GET':
-			queryDocument("worlds",requestUrl.query ,(err,getDocs)=>{
+			queryDocument(collection,requestUrl.query ,(err,getDocs)=>{
 														response.statusCode = 200;
 														response.end(JSON.stringify(getDocs));
 													});
 		break;
 		case 'POST':
-			insertDocument("worlds",data.post,(err,postResults)=>{
+			insertDocument(collection,data.post,(err,postResults)=>{
 													response.statusCode = 201;
 													response.end(JSON.stringify(postResults));
 												});
 		break;
 		case 'DELETE':
 			console.log(data);
-			removeDocument("worlds",data.query, (err,deleteResults) =>{
+			removeDocument(collection,data.query, (err,deleteResults) =>{
 															response.statusCode = 200;
 															response.end(JSON.stringify(deleteResults));
 														});
 		break;
 		case 'PATCH':
-			updateDocument("worlds",data.query,data.post,(err,updateResults) =>{
+			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
 															response.statusCode = 200;
 															response.end(JSON.stringify(updateResults));
 														});
@@ -281,13 +238,69 @@ var RouteApiWorld = function(request, response, data, PageHandler) {
 };
 
 var RouteApiPlayer = function(request, response, data, PageHandler) {
+	collection = "players";
+	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
-	APIHandler(request.method,"players",requestUrl.query,data,response);
+	switch(request.method) {
+		case 'GET':
+			queryDocument(collection,requestUrl.query ,(err,getDocs)=>{
+														response.statusCode = 200;
+														response.end(JSON.stringify(getDocs));
+													});
+		break;
+		case 'POST':
+			insertDocument(collection,data.post,(err,postResults)=>{
+													response.statusCode = 201;
+													response.end(JSON.stringify(postResults));
+												});
+		break;
+		case 'DELETE':
+			console.log(data);
+			removeDocument(collection,data.query, (err,deleteResults) =>{
+															response.statusCode = 200;
+															response.end(JSON.stringify(deleteResults));
+														});
+		break;
+		case 'PATCH':
+			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
+															response.statusCode = 200;
+															response.end(JSON.stringify(updateResults));
+														});
+		break;
+	};
 };
 
 var RouteApiFeature = function(request, response, data, PageHandler) {
+	collection = "features";
+	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
-	APIHandler(request.method,"features",requestUrl.query,data,response);
+	switch(request.method) {
+		case 'GET':
+			queryDocument(collection,requestUrl.query ,(err,getDocs)=>{
+														response.statusCode = 200;
+														response.end(JSON.stringify(getDocs));
+													});
+		break;
+		case 'POST':
+			insertDocument(collection,data.post,(err,postResults)=>{
+													response.statusCode = 201;
+													response.end(JSON.stringify(postResults));
+												});
+		break;
+		case 'DELETE':
+			console.log(data);
+			removeDocument(collection,data.query, (err,deleteResults) =>{
+															response.statusCode = 200;
+															response.end(JSON.stringify(deleteResults));
+														});
+		break;
+		case 'PATCH':
+			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
+															response.statusCode = 200;
+															response.end(JSON.stringify(updateResults));
+														});
+		break;
+	};
 };
 
 var RequestHandler =  function(request, response){
