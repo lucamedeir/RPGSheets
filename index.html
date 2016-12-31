@@ -202,6 +202,7 @@
 				render () {
 					return (
 						<div>
+							<h1>Worlds</h1>
 							<WorldList onClickDelete={this.handleDelete} onClickEdit={this.handleEdit} onEditChange={this.handleEditionChange} onConfirmEdition={this.handleConfirmEdition} worlds={this.state.worlds} />
 							<form onSubmit={this.handleCreate}>
 								<input onChange={this.handleChange} value={this.state.form.name} />
