@@ -166,9 +166,15 @@
 											var index = prevState.worlds.indexOf(world);
 											prevState.worlds[index].name = world.modifiableName;
 											prevState.worlds[index].isEditting = false;
+											prevState.worlds[index].url = "/"+world.modifiableName;
 											return ({worlds:prevState.worlds});
-										});									
+										});
 									}
+								});
+							} else {
+								this.setState((prevState)=>{
+									prevState.worlds[index].isEditting = false;
+									return ({worlds:prevState.worlds});
 								});
 							}
 							
