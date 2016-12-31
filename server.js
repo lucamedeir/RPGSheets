@@ -271,6 +271,6 @@ router.add(/^\/(?!(api))\w+\/\w+$/,RoutePlayer);
 router.add(/^\/api\/feature$/,RouteApiFeature);
 router.add(/^\/api\/world$/,RouteApiWorld);
 router.add(/^\/api\/player$/,RouteApiPlayer);
-router.add(/^\/public\/\w+(.png|.css|.js|.html)$/,RoutePublic);
+router.add(/^\/public\/[(\--z)]+(.png|.css|.js|.html)$/,RoutePublic);
 
 server.listen(8080);
