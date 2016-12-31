@@ -52,6 +52,18 @@ var updateDocument = function(collection, query, data, callback) {
 	});
 };
 
+var updateDocuments = function(collection, query, data, callback) {
+   globalDB.collection(collection).updateMany(query,
+      {
+        $set: data,
+        $currentDate: { "lastModified": true }
+      }
+      ,
+      function(err, results) {
+        callback(err,results);
+   });
+};
+
 var RoutePublic = function(request, response, data, PageHandler) {
 	var requestUrl = url.parse(request.url,true);
 	var pathname = requestUrl.pathname;
@@ -172,15 +184,18 @@ var RouteApiWorld = function(request, response, data, PageHandler) {
 		case 'DELETE':
 			console.log(data);
 			removeDocument(collection,data.query, (err,deleteResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(deleteResults));
-														});
+				response.statusCode = 200;
+				response.end(JSON.stringify(deleteResults));
+			});
 		break;
 		case 'PATCH':
 			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(updateResults));
-														});
+				updateDocuments("players",{"world":data.query.name},{"world":data.post.name},(err,updateResults) =>{
+					response.statusCode = 200;
+					response.end(JSON.stringify(updateResults));
+				});
+			});
+			
 		break;
 	};
 };
