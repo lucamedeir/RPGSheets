@@ -22,7 +22,6 @@ var RequestPageHandler = function(statusCode,response, filename, DataHandler){
 				});
 			} else {
 				fs.readFile(filename, (err, data) => {
-					console.log(err);
 					if(!err){
 						response.end(data);
 					} else {
