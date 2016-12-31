@@ -12,21 +12,92 @@
 	<body>
 		<div id="root"></div>
 		<script type="text/babel">
-			function WorldList(props) {
-			  const worlds = props.worlds;
-			  const listItems = worlds.map((world) =>
-			    <li key={world.name}>
-			    	<a href={world.url} target="_top">{world.name}</a>
-			    </li>
-			  );
-			  return (
-			    <ul>{listItems}</ul>
-			  );
+
+
+			class WorldList extends React.Component {
+				render () {
+					return (
+						<ul>
+							{this.props.worlds.map(world=>(
+								<li key={world.name}>
+									<a href={world.url} target="_top">{world.name}</a>
+								</li>
+							))}
+						</ul>
+					);
+				}
 			}
 
-			const worlds = <SERVER_REPLACE_WORLDS>;
+			class Main extends React.Component {
+				constructor(props) {
+					super (props);
+					
+
+					this.handleSubmit = this.handleSubmit.bind(this);
+					this.handleChange = this.handleChange.bind(this);
+
+					this.state = {worlds:[], form:{name:''}};
+				}
+
+				componentDidMount() {
+					fetch('/api/world').then((response)=>{
+						return response.json();
+					}).then((json)=>{
+
+						this.setState({worlds:json.map((world)=>({
+							name:world.name,
+							url:"/"+world.name
+						}))});
+					});
+				}
+
+				handleSubmit(e) {
+					e.preventDefault();
+					console.log(this);
+					if(this.state.form.name) {
+						fetch('/api/world', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({
+								post:{name: this.state.form.name,}
+							})
+						}).then((response) =>{
+							if(response.status == 201) {
+								var newWorld = {
+									name:this.state.form.name,
+									url: "/"+this.state.form.name
+									};
+								this.setState((prevState)=>({
+									worlds: prevState.worlds.concat(newWorld),
+									form:{name:''}
+								}));
+							}
+						});
+					}
+
+				}
+
+				handleChange(e) {
+					this.setState({form:{name:e.target.value}});
+				}
+
+				render () {
+					return (
+						<div>
+							<WorldList worlds={this.state.worlds} />
+							<form onSubmit={this.handleSubmit}>
+								<input onChange={this.handleChange} value={this.state.form.name} />
+								<button>Add World</button>
+							</form>
+						</div>
+					);
+				}
+			}
+
 			ReactDOM.render(
-			  <WorldList worlds={worlds} />,
+			  <Main />,
 			  document.getElementById('root')
 			);
 		</script>
