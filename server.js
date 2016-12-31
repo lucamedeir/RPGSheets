@@ -77,12 +77,7 @@ var RouteIndex = function(request,response,data,PageHandler) {
 	var filePath = "./index.html";
 	queryDocument("worlds",{} ,(err, docs)=>{
 		if(!err){
-			PageHandler(200,response,filePath,(page) => {
-				docs.map((doc)=>{
-					doc.url = "http://localhost:8080/"+doc.name;
-				});
-				return page.replace(/<SERVER_REPLACE_WORLDS>/g,JSON.stringify(docs));
-			});	
+			PageHandler(200,response,filePath);	
 		} else {
 			PageHandler(404,response);
 		}
