@@ -64,7 +64,6 @@ exports.RequestHandler =  function(request, response){
 
 		var isNotFound = globalRoutes.every((item,index)=>{
 							if(item.url.test(requestUrl.pathname)) {
-								console.log(requestUrl.pathname);
 								item.route(request,response,data,RequestPageHandler);
 								return false;
 							} else return true;
