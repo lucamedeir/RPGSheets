@@ -18,12 +18,11 @@ along with RPGsheets.  If not, see <http://www.gnu.org/licenses/>.
 var http = require('http');
 var url = require('url');
 var path = require('path');
-var fs = require('fs');
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
+var router = require('./router.js');
 
 var globalDB;
-var globalRoutes = [];
 
 var insertDocument = function(collection,data, callback) {
 	globalDB.collection(collection).insertOne( data, function(err, results) {
@@ -53,53 +52,7 @@ var updateDocument = function(collection, query, data, callback) {
 	});
 };
 
-var RequestPageHandler = function(statusCode,response, filename, DataHandler){
-	response.statusCode = statusCode;
-	switch(statusCode){
-		case 200:
-			if(DataHandler) {
-				fs.readFile(filename, 'utf8', (err, data) => {
-					if(!err){
-						data = DataHandler(data);
-						response.end(data);
-					} else {
-						if(err.code === "ENOENT") {
-							RequestPageHandler(404,response);
-						} else {
-							RequestPageHandler(500,response);
-						}
-					}
-				});
-			} else {
-				fs.readFile(filename, (err, data) => {
-					console.log(err);
-					if(!err){
-						response.end(data);
-					} else {
-						if(err.code === "ENOENT") {
-							RequestPageHandler(404,response);
-						} else {
-							RequestPageHandler(500,response);
-						}
-					}
-				});
-			}
-
-		break;
-		case 404:
-			response.setHeader('Content-Type', 'text/html');
-			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>404 Not Found</title></head><body><h1>Not Found</h1></body></html>');
-		break;
-		case 500:
-			response.setHeader('Content-Type', 'text/html');
-			response.end('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>500 Internal Server Error</title></head><body><h1>Internal Server Error</h1></body></html>');
-		break;
-		default:
-		break;
-	}
-};
-
-var RoutePublic = function(request, response, data,PageHandler) {
+var RoutePublic = function(request, response, data, PageHandler) {
 	var requestUrl = url.parse(request.url,true);
 	var pathname = requestUrl.pathname;
 	var imageUrlRegx = /.png/g;
@@ -303,35 +256,6 @@ var RouteApiFeature = function(request, response, data, PageHandler) {
 	};
 };
 
-var RequestHandler =  function(request, response){
-	var requestUrl = url.parse(request.url,true);
-	var requestData = '';
-	request.on('data', function (chunk) {
-		requestData += chunk;
-	});
-	request.on('end',()=>{
-		var data = "";
-		if(requestData){
-			data = JSON.parse(requestData);
-		}
-		console.log(request.method + " [" +requestUrl.pathname+"]");
-
-		var isNotFound = globalRoutes.every((item,index)=>{
-							console.log(item);
-							if(item.url.test(requestUrl.pathname)) {
-								console.log(requestUrl.pathname);
-								item.route(request,response,data,RequestPageHandler);
-								return false;
-							} else return true;
-
-						 });
-		if(isNotFound) {
-			RequestPageHandler(404,response);
-		}
-	});
-};
-
-
 var urlMongodb = 'mongodb://localhost:27017/rpgsheets';
 MongoClient.connect(urlMongodb, function(err, db) {
 	assert.equal(null, err);
@@ -339,15 +263,14 @@ MongoClient.connect(urlMongodb, function(err, db) {
 	globalDB = db;
 });
 
+var server = http.createServer(router.RequestHandler);
 
-globalRoutes.push({"url":/^\/$/,"route":RouteIndex});
-globalRoutes.push({"url":/^\/\w+$/,"route":RouteWorld});
-globalRoutes.push({"url":/^\/(?!(api))\w+\/\w+$/,"route":RoutePlayer});
-globalRoutes.push({"url":/^\/api\/feature$/,"route":RouteApiFeature});
-globalRoutes.push({"url":/^\/api\/world$/,"route":RouteApiWorld});
-globalRoutes.push({"url":/^\/api\/player$/,"route":RouteApiPlayer});
-globalRoutes.push({"url":/^\/public\/\w+(.png|.css|.js|.html)$/,"route":RoutePublic});
-
-var server = http.createServer(RequestHandler);
+router.add(/^\/$/,RouteIndex);
+router.add(/^\/\w+$/,RouteWorld);
+router.add(/^\/(?!(api))\w+\/\w+$/,RoutePlayer);
+router.add(/^\/api\/feature$/,RouteApiFeature);
+router.add(/^\/api\/world$/,RouteApiWorld);
+router.add(/^\/api\/player$/,RouteApiPlayer);
+router.add(/^\/public\/\w+(.png|.css|.js|.html)$/,RoutePublic);
 
 server.listen(8080);
