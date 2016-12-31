@@ -15,18 +15,26 @@
 
 
 			class WorldList extends React.Component {
-				constructor(props) {
-					super(props);
-				}
-
 				render () {
 					return (
 						<ul>
 							{this.props.worlds.map(world=>(
 								<li key={world.name}>
-									<a href="" onClick={this.props.onClick} data-id={world.name} ><img alt={"delete_"+world.name} src="/public/images/delete.png" width="15" height="15"/></a>
-									<a href={world.url} target="_top">{world.name}</a>
-									
+									{
+									world.isEditting?
+										<div>
+											<form data-id={world.name} onSubmit={this.props.onConfirmEdition}>
+												<input data-id={world.name} value={world.modifiableName} onChange={this.props.onEditChange} />
+												<button>ok</button>
+											</form>
+										</div>
+									:
+										<div>
+											<a href="" onClick={this.props.onClickDelete} data-id={world.name} ><img alt={"delete_"+world.name} src="/public/images/delete.png" width="15" height="15"/></a>
+											<a href="" onClick={this.props.onClickEdit} data-id={world.name} ><img alt={"edit_"+world.name} src="/public/images/edit.png" width="15" height="15"/></a>
+											<a href={world.url} target="_top">{world.name}</a>
+										</div>
+									}
 								</li>
 							))}
 						</ul>
@@ -38,9 +46,12 @@
 				constructor(props) {
 					super (props);
 					
-					this.handleSubmit = this.handleSubmit.bind(this);
+					this.handleCreate = this.handleCreate.bind(this);
 					this.handleChange = this.handleChange.bind(this);
 					this.handleDelete = this.handleDelete.bind(this);
+					this.handleEdit = this.handleEdit.bind(this);
+					this.handleConfirmEdition = this.handleConfirmEdition.bind(this);
+					this.handleEditionChange = this.handleEditionChange.bind(this);
 
 					this.state = {worlds:[], form:{name:''}};
 				}
@@ -49,15 +60,16 @@
 					fetch('/api/world').then((response)=>{
 						return response.json();
 					}).then((json)=>{
-						console.log(json);
 						this.setState({worlds:json.map((world)=>({
 							name:world.name,
-							url:"/"+world.name
+							modifiableName:world.name,
+							url:"/"+world.name,
+							isEditting:false
 						}))});
 					});
 				}
 
-				handleSubmit(e) {
+				handleCreate(e) {
 					e.preventDefault();
 					if(this.state.form.name) {
 						fetch('/api/world', {
@@ -72,7 +84,9 @@
 							if(response.status == 201) {
 								var newWorld = {
 									name:this.state.form.name,
-									url: "/"+this.state.form.name
+									modifiableName:this.state.form.name,
+									url: "/"+this.state.form.name,
+									isEditting:false
 									};
 								this.setState((prevState)=>({
 									worlds: prevState.worlds.concat(newWorld),
@@ -103,7 +117,7 @@
 						if(response.status == 200) {
 							this.setState((prevState)=>{
 								var modifiedWorlds = prevState.worlds.slice(0);
-								modifiedWorlds.map((world,index)=>{
+								modifiedWorlds.forEach((world,index,worlds)=>{
 									if(world.name === worldName) {
 										if(index > -1) {
 											prevState.worlds.splice(index,1);
@@ -117,11 +131,73 @@
 					});
 				}
 
+				handleEdit(e){
+					e.preventDefault();
+					var worldName = e.currentTarget.dataset.id;
+					this.setState((prevState)=>{
+						prevState.worlds.forEach((world,index,worlds)=>{
+							if(world.name === worldName) {
+								worlds[index].isEditting = true;
+							}
+						});
+
+						return ({worlds:prevState.worlds})
+					});
+				}
+
+				handleConfirmEdition(e) {
+					e.preventDefault();
+					var worldName = e.currentTarget.dataset.id;
+					this.state.worlds.forEach((world,index,worlds)=>{
+						if(world.name === worldName) {
+							if(!(world.name === world.modifiableName)){
+								fetch('/api/world', {
+									method: 'PATCH',
+									headers: {
+										'Content-Type': 'application/json'
+									},
+									body: JSON.stringify({
+										query:{name: world.name},
+										post:{name:world.modifiableName}
+									})
+								}).then((response) =>{
+									if(response.status == 200) {
+										this.setState((prevState)=>{
+											var index = prevState.worlds.indexOf(world);
+											prevState.worlds[index].name = world.modifiableName;
+											prevState.worlds[index].isEditting = false;
+											return ({worlds:prevState.worlds});
+										});									
+									}
+								});
+							}
+							
+						}
+					});
+
+
+				}
+
+				handleEditionChange(e) {
+					e.preventDefault();
+					var worldName = e.currentTarget.dataset.id;
+					var newName = e.target.value;
+					this.setState((prevState)=>{
+						prevState.worlds.forEach((world,index,worlds)=>{
+							if(world.name === worldName) {
+								worlds[index].modifiableName = newName;
+							}
+						});
+
+						return ({worlds:prevState.worlds});
+					});
+				}
+
 				render () {
 					return (
 						<div>
-							<WorldList onClick={this.handleDelete} worlds={this.state.worlds} />
-							<form onSubmit={this.handleSubmit}>
+							<WorldList onClickDelete={this.handleDelete} onClickEdit={this.handleEdit} onEditChange={this.handleEditionChange} onConfirmEdition={this.handleConfirmEdition} worlds={this.state.worlds} />
+							<form onSubmit={this.handleCreate}>
 								<input onChange={this.handleChange} value={this.state.form.name} />
 								<button>Add World</button>
 							</form>
