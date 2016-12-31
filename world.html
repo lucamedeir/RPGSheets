@@ -2,30 +2,222 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>World page</title>
+		<title>RPG Sheets</title>
 		<script src="https://unpkg.com/react@15/dist/react.js"></script>
 		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
 		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+		<script src="http://localhost:8080/public/javascript/fetch-2.0.1.js"></script>
 	</head>
 
 	<body>
 		<div id="root"></div>
 		<script type="text/babel">
-			function PlayerList(props) {
-			  const players = props.players;
-			  const listItems = players.map((Player) =>
-			    <li key={Player.name}>
-					<a href={Player.url} target="_top">{Player.name}</a>
-			    </li>
-			  );
-			  return (
-			    <ul>{listItems}</ul>
-			  );
+
+
+			class PlayerList extends React.Component {
+				render () {
+					return (
+						<ul>
+							{this.props.players.map(player=>(
+								<li key={player.name}>
+									{
+									player.isEditting?
+										<div>
+											<form data-id={player.name} onSubmit={this.props.onConfirmEdition}>
+												<input data-id={player.name} value={player.modifiableName} onChange={this.props.onEditChange} />
+												<button>ok</button>
+											</form>
+										</div>
+									:
+										<div>
+											<a href="" onClick={this.props.onClickDelete} data-id={player.name} ><img alt={"delete_"+player.name} src="/public/images/delete.png" width="15" height="15"/></a>
+											<a href="" onClick={this.props.onClickEdit} data-id={player.name} ><img alt={"edit_"+player.name} src="/public/images/edit.png" width="15" height="15"/></a>
+											<a href={player.url} target="_top">{player.name}</a>
+										</div>
+									}
+								</li>
+							))}
+						</ul>
+					);
+				}
 			}
 
-			const players = <SERVER_REPLACE_PLAYERS>;
+			const worldName = "<SERVER_REPLACE_WORLD_NAME>";
+
+			class Main extends React.Component {
+				constructor(props) {
+					super (props);
+					
+					this.handleCreate = this.handleCreate.bind(this);
+					this.handleChange = this.handleChange.bind(this);
+					this.handleDelete = this.handleDelete.bind(this);
+					this.handleEdit = this.handleEdit.bind(this);
+					this.handleConfirmEdition = this.handleConfirmEdition.bind(this);
+					this.handleEditionChange = this.handleEditionChange.bind(this);
+
+					this.state = {players:[], form:{name:''}};
+				}
+
+				componentDidMount() {
+					fetch('/api/player?world='+worldName).then((response)=>{
+						return response.json();
+					}).then((json)=>{
+						this.setState({players:json.map((player)=>({
+							name:player.name,
+							world:player.world,
+							modifiableName:player.name,
+							url:"/"+player.world+"/"+player.name,
+							isEditting:false
+						}))});
+					});
+				}
+
+				handleCreate(e) {
+					e.preventDefault();
+					if(this.state.form.name) {
+						fetch('/api/player', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({
+								post:{name: this.state.form.name,world:worldName}
+							})
+						}).then((response) =>{
+							if(response.status == 201) {
+								var newplayer = {
+									name:this.state.form.name,
+									modifiableName:this.state.form.name,
+									url: "/"+worldName+"/"+this.state.form.name,
+									isEditting:false
+									};
+								this.setState((prevState)=>({
+									players: prevState.players.concat(newplayer),
+									form:{name:''}
+								}));
+							}
+						});
+					}
+
+				}
+
+				handleChange(e) {
+					this.setState({form:{name:e.target.value}});
+				}
+
+				handleDelete(e) {
+					e.preventDefault();
+					var playerName = e.currentTarget.dataset.id;
+					fetch('/api/player', {
+						method: 'DELETE',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							query:{name: e.currentTarget.dataset.id}
+						})
+					}).then((response) =>{
+						if(response.status == 200) {
+							this.setState((prevState)=>{
+								var modifiedplayers = prevState.players.slice(0);
+								modifiedplayers.forEach((player,index,players)=>{
+									if(player.name === playerName) {
+										if(index > -1) {
+											prevState.players.splice(index,1);
+										}
+									}
+								});
+
+								return ({players:prevState.players})
+							});
+						}
+					});
+				}
+
+				handleEdit(e){
+					e.preventDefault();
+					var playerName = e.currentTarget.dataset.id;
+					this.setState((prevState)=>{
+						prevState.players.forEach((player,index,players)=>{
+							if(player.name === playerName) {
+								players[index].isEditting = true;
+							}
+						});
+
+						return ({players:prevState.players})
+					});
+				}
+
+				handleConfirmEdition(e) {
+					e.preventDefault();
+					var playerName = e.currentTarget.dataset.id;
+					this.state.players.forEach((player,index,players)=>{
+						if(player.name === playerName) {
+							if(!(player.name === player.modifiableName)){
+								fetch('/api/player', {
+									method: 'PATCH',
+									headers: {
+										'Content-Type': 'application/json'
+									},
+									body: JSON.stringify({
+										query:{name: player.name},
+										post:{name:player.modifiableName}
+									})
+								}).then((response) =>{
+									if(response.status == 200) {
+										this.setState((prevState)=>{
+											var index = prevState.players.indexOf(player);
+											prevState.players[index].name = player.modifiableName;
+											prevState.players[index].isEditting = false;
+											prevState.players[index].url = "/"+worldName+"/"+player.modifiableName;
+											return ({players:prevState.players});
+										});
+									}
+								});
+							} else {
+								this.setState((prevState)=>{
+									prevState.players[index].isEditting = false;
+									return ({players:prevState.players});
+								});
+							}
+							
+						}
+					});
+
+
+				}
+
+				handleEditionChange(e) {
+					e.preventDefault();
+					var playerName = e.currentTarget.dataset.id;
+					var newName = e.target.value;
+					this.setState((prevState)=>{
+						prevState.players.forEach((player,index,players)=>{
+							if(player.name === playerName) {
+								players[index].modifiableName = newName;
+							}
+						});
+
+						return ({players:prevState.players});
+					});
+				}
+
+				render () {
+					return (
+						<div>
+							<h1>{worldName}</h1>
+							<PlayerList onClickDelete={this.handleDelete} onClickEdit={this.handleEdit} onEditChange={this.handleEditionChange} onConfirmEdition={this.handleConfirmEdition} players={this.state.players} />
+							<form onSubmit={this.handleCreate}>
+								<input onChange={this.handleChange} value={this.state.form.name} />
+								<button>Add Player</button>
+							</form>
+						</div>
+					);
+				}
+			}
+
 			ReactDOM.render(
-			  <PlayerList players={players} />,
+			  <Main />,
 			  document.getElementById('root')
 			);
 		</script>

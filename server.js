@@ -107,17 +107,8 @@ var RouteWorld = function(request,response,data,PageHandler) {
 	queryDocument('worlds',{"name":worldName},(err,worldDocs)=>{
 		if(!err) {
 			if(worldDocs.length) {
-				queryDocument("players",{"world":worldName} ,(err,playerDocs)=>{
-					if(!err) {
-						PageHandler(200,response,filePath,(page)=>{
-							playerDocs.map((player)=>{
-								player.url = "http://localhost:8080/"+worldName+"/"+player.name;
-							});
-							return page.replace(/<SERVER_REPLACE_PLAYERS>/g,JSON.stringify(playerDocs));
-						});
-					} else {
-						PageHandler(500,response);	
-					}
+				PageHandler(200,response,filePath,(page)=>{
+					return page.replace(/<SERVER_REPLACE_WORLD_NAME>/g,worldName);
 				});
 			} else {
 				PageHandler(404,response);
