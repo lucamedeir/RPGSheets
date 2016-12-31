@@ -15,12 +15,18 @@
 
 
 			class WorldList extends React.Component {
+				constructor(props) {
+					super(props);
+				}
+
 				render () {
 					return (
 						<ul>
 							{this.props.worlds.map(world=>(
 								<li key={world.name}>
+									<a href="" ><img alt={"delete_"+world.name} src="/public/images/delete.png" width="15" height="15" /></a>
 									<a href={world.url} target="_top">{world.name}</a>
+									
 								</li>
 							))}
 						</ul>
@@ -43,7 +49,7 @@
 					fetch('/api/world').then((response)=>{
 						return response.json();
 					}).then((json)=>{
-
+						console.log(json);
 						this.setState({worlds:json.map((world)=>({
 							name:world.name,
 							url:"/"+world.name
@@ -61,7 +67,7 @@
 								'Content-Type': 'application/json'
 							},
 							body: JSON.stringify({
-								post:{name: this.state.form.name,}
+								post:{name: this.state.form.name}
 							})
 						}).then((response) =>{
 							if(response.status == 201) {
