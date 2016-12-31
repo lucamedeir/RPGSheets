@@ -24,7 +24,7 @@
 						<ul>
 							{this.props.worlds.map(world=>(
 								<li key={world.name}>
-									<a href="" ><img alt={"delete_"+world.name} src="/public/images/delete.png" width="15" height="15" /></a>
+									<a href="" onClick={this.props.onClick} data-id={world.name} ><img alt={"delete_"+world.name} src="/public/images/delete.png" width="15" height="15"/></a>
 									<a href={world.url} target="_top">{world.name}</a>
 									
 								</li>
@@ -38,9 +38,9 @@
 				constructor(props) {
 					super (props);
 					
-
 					this.handleSubmit = this.handleSubmit.bind(this);
 					this.handleChange = this.handleChange.bind(this);
+					this.handleDelete = this.handleDelete.bind(this);
 
 					this.state = {worlds:[], form:{name:''}};
 				}
@@ -59,7 +59,6 @@
 
 				handleSubmit(e) {
 					e.preventDefault();
-					console.log(this);
 					if(this.state.form.name) {
 						fetch('/api/world', {
 							method: 'POST',
@@ -89,10 +88,39 @@
 					this.setState({form:{name:e.target.value}});
 				}
 
+				handleDelete(e) {
+					e.preventDefault();
+					var worldName = e.currentTarget.dataset.id;
+					fetch('/api/world', {
+						method: 'DELETE',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							query:{name: e.currentTarget.dataset.id}
+						})
+					}).then((response) =>{
+						if(response.status == 200) {
+							this.setState((prevState)=>{
+								var modifiedWorlds = prevState.worlds.slice(0);
+								modifiedWorlds.map((world,index)=>{
+									if(world.name === worldName) {
+										if(index > -1) {
+											prevState.worlds.splice(index,1);
+										}
+									}
+								});
+
+								return ({worlds:prevState.worlds})
+							});
+						}
+					});
+				}
+
 				render () {
 					return (
 						<div>
-							<WorldList worlds={this.state.worlds} />
+							<WorldList onClick={this.handleDelete} worlds={this.state.worlds} />
 							<form onSubmit={this.handleSubmit}>
 								<input onChange={this.handleChange} value={this.state.form.name} />
 								<button>Add World</button>
