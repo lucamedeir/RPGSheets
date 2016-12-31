@@ -290,6 +290,39 @@ var RouteApiClass = function(request, response, data, PageHandler) {
 	};
 };
 
+var RouteApiRace = function(request, response, data, PageHandler) {
+	collection = "races";
+	response.setHeader('Content-Type', 'application/json');
+	var requestUrl = url.parse(request.url,true);
+	switch(request.method) {
+		case 'GET':
+			queryDocument(collection,requestUrl.query ,(err,getDocs)=>{
+														response.statusCode = 200;
+														response.end(JSON.stringify(getDocs));
+													});
+		break;
+		case 'POST':
+			insertDocument(collection,data.post,(err,postResults)=>{
+													response.statusCode = 201;
+													response.end(JSON.stringify(postResults));
+												});
+		break;
+		case 'DELETE':
+			console.log(data);
+			removeDocument(collection,data.query, (err,deleteResults) =>{
+															response.statusCode = 200;
+															response.end(JSON.stringify(deleteResults));
+														});
+		break;
+		case 'PATCH':
+			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
+															response.statusCode = 200;
+															response.end(JSON.stringify(updateResults));
+														});
+		break;
+	};
+};
+
 var urlMongodb = 'mongodb://localhost:27017/rpgsheets';
 MongoClient.connect(urlMongodb, function(err, db) {
 	assert.equal(null, err);
@@ -306,6 +339,7 @@ router.add(/^\/api\/feature$/,RouteApiFeature);
 router.add(/^\/api\/world$/,RouteApiWorld);
 router.add(/^\/api\/player$/,RouteApiPlayer);
 router.add(/^\/api\/class$/,RouteApiClass);
+router.add(/^\/api\/race$/,RouteApiRace);
 router.add(/^\/public\/[(\--z)]+(.png|.css|.js|.html)$/,RoutePublic);
 
 server.listen(8080);
