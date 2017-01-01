@@ -6,21 +6,142 @@
 		<script src="https://unpkg.com/react@15/dist/react.js"></script>
 		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
 		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+		<script src="http://localhost:8080/public/javascript/fetch-2.0.1.js"></script>
 	</head>
 
 	<body>
 		<div id="root"></div>
 		<script type="text/babel">
-			function Player(props) {
-			  const player = props.player;
-			  return (
-			    <h1>{player.name}</h1>
-			  );
+			const player = <SERVER_REPLACE_PLAYER>;
+				const levelTable = [
+							0,
+							300,
+							900,
+							2700,
+							6500,
+							14000,
+							23000,
+							34000,
+							48000,
+							64000,
+							85000,
+							100000,
+							120000,
+							140000,
+							165000,
+							195000,
+							225000,
+							265000,
+							305000,
+							355000
+							];
+
+			function calculateLevelAndProfis(exp) {
+				var level = 0;
+				levelTable.forEach((item,index,array)=>{
+					if(exp >= item) {
+						level = index + 1;
+					}
+				});
+				var prf = Math.floor((level-1)/4)+2;
+
+				return ({"lvl":level,"prf":prf});
 			}
 
-			const player = <SERVER_REPLACE_PLAYER>;
+			function StatsList(props) {
+				return (
+					<ul>
+						{props.stats.map((stat)=>(
+							<li key={stat.id}>
+								<h4>{stat.id}</h4>
+								+ {stat.bonus}
+								<input data-id={stat.id}  onChange={props.onChange} value={stat.value} />
+							</li>
+						))}
+					</ul>
+				);
+			}		
+
+			class Main extends React.Component {
+				constructor(props){
+					super(props);
+
+					this.state = {"player":props.player};
+					this.handleExpChange = this.handleExpChange.bind(this);
+					this.handleNameChange = this.handleNameChange.bind(this);
+					this.handleStatChange = this.handleStatChange.bind(this);
+				}
+
+
+				componentDidMount() {
+					var expData = calculateLevelAndProfis(this.state.player.exp);
+					this.setState((prevState)=>{
+						prevState.player.lvl = expData.lvl;
+						prevState.player.prf = expData.prf;
+						prevState.player.stats.map((stat)=>{
+							stat.bonus = Math.floor((stat.value-10)/2);
+						});
+						return ({player:prevState.player});
+					});
+				}
+
+				handleExpChange(e) {
+					var newExp = e.target.value;
+					var expData = calculateLevelAndProfis(newExp);
+
+					this.setState((prevState)=>{
+						prevState.player.exp = newExp;
+						prevState.player.lvl = expData.lvl;
+						prevState.player.prf = expData.prf;
+
+						return ({player:prevState.player});
+					});
+				}
+
+				handleStatChange(e){
+					var statId = e.target.dataset.id;
+					var newValue = e.target.value;
+					if(0 <= newValue && newValue <= 20) {
+						this.setState((prevState)=>{
+							prevState.player.stats.forEach((item,index,array)=>{
+								if(item.id === statId){
+									array[index].value = newValue;
+									array[index].bonus = Math.floor((newValue-10)/2);
+								}
+							});
+
+							return ({player:prevState.player});
+						});
+					}
+					
+				}
+
+				handleNameChange(e) {
+					var newName = e.target.value;
+
+					this.setState((prevState)=>{
+						prevState.player.name = newName;
+						
+						return ({player:prevState.player});
+					});
+				}
+
+				render() {
+					return (
+						<div>
+							<h3>{this.state.player.class} {this.state.player.lvl}</h3>
+							<input data-id="name" onChange={this.handleNameChange} value={this.state.player.name}/> 
+							<input data-id="exp" onChange={this.handleExpChange} value={this.state.player.exp}/>
+							+{this.state.player.prf}
+							<StatsList stats={this.state.player.stats} onChange={this.handleStatChange} />
+						</div>
+					);
+				}
+			}
+
+			
 			ReactDOM.render(
-			  <Player player={player} />,
+			  <Main player={player} />,
 			  document.getElementById('root')
 			);
 		</script>

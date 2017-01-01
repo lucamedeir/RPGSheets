@@ -81,7 +81,7 @@
 								'Content-Type': 'application/json'
 							},
 							body: JSON.stringify({
-								post:{name: this.state.form.name,world:worldName}
+								post:{name: this.state.form.name,world:worldName,exp:0}
 							})
 						}).then((response) =>{
 							if(response.status == 201) {
