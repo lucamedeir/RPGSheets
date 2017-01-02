@@ -60,7 +60,18 @@
 						))}
 					</ul>
 				);
-			}		
+			}
+			function SavThrowsList(props) {
+				return (
+					<ul>
+						{props.savThrows.map((sav)=>(
+							<li key={sav.id}>
+								<input data-id={sav.id} checked={sav.savthrow} type="checkbox" value={sav.id} /> + {sav.savthrow?sav.bonus+props.prf:sav.bonus} {sav.id}
+							</li>
+						))}
+					</ul>
+				);
+			}
 
 			class Main extends React.Component {
 				constructor(props){
@@ -134,6 +145,7 @@
 							<input data-id="exp" onChange={this.handleExpChange} value={this.state.player.exp}/>
 							+{this.state.player.prf}
 							<StatsList stats={this.state.player.stats} onChange={this.handleStatChange} />
+							<SavThrowsList savThrows={this.state.player.stats} prf={this.state.player.prf} />
 						</div>
 					);
 				}
