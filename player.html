@@ -6,39 +6,170 @@
 		<script src="https://unpkg.com/react@15/dist/react.js"></script>
 		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
 		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-		<script src="http://localhost:8080/public/javascript/fetch-2.0.1.js"></script>
+		<script src="/public/javascript/fetch-2.0.1.js"></script>
+		<style>
+			ul {
+			  list-style-type: none;
+			}
+			#wrapper {
+			    overflow: hidden; /* will contain if #first is longer than #second */
+			}
+			#first {
+			    float:left; /* add this */
+			}
+			#second {
+			    overflow: left; /* if you don't want #second to wrap below #first */
+			}
+		</style>
+		
 	</head>
 
 	<body>
 		<div id="root"></div>
 		<script type="text/babel">
 			const player = <SERVER_REPLACE_PLAYER>;
-				const levelTable = [
-							0,
-							300,
-							900,
-							2700,
-							6500,
-							14000,
-							23000,
-							34000,
-							48000,
-							64000,
-							85000,
-							100000,
-							120000,
-							140000,
-							165000,
-							195000,
-							225000,
-							265000,
-							305000,
-							355000
-							];
+			const playerClass = {
+				name:"warlock",
+				savThrows:{cha:true,wis:true},
+				nAllowedSkills:3,
+				allowedSkills:{
+					arca:true,
+					dece:true,
+					hist:true,
+					inti:true,
+					inve:true,
+					natu:true,
+					reli:true
+				}
+			};
+			player.class = playerClass;
+
+			const statsDefinition = [
+				{name:"Strength",id:"str"},
+				{name:"Dexterity",id:"dex"},
+				{name:"Consitution",id:"con"},
+				{name:"Intelligence",id:"int"},
+				{name:"Wisdom",id:"wis"},
+				{name:"Charisma",id:"cha"}
+			];
+			const levelTableDefinition = [
+				0,
+				300,
+				900,
+				2700,
+				6500,
+				14000,
+				23000,
+				34000,
+				48000,
+				64000,
+				85000,
+				100000,
+				120000,
+				140000,
+				165000,
+				195000,
+				225000,
+				265000,
+				305000,
+				355000
+			];
+			const skillsDefinition = [
+				{
+				"name": "Acrobatics",
+				"id": "acro",
+				"stat": "dex"
+				},
+				  {
+				"name": "Animal Handling",
+				"id": "anim",
+				"stat": "wis"
+				},
+				  {
+				"name": "Arcana",
+				"id": "arca",
+				"stat": "int"
+				},
+				  {
+				"name": "Athletics",
+				"id": "athl",
+				"stat": "str"
+				},
+				  {
+				"name": "Deception",
+				"id": "dece",
+				"stat": "cha"
+				},
+				  {
+				"name": "History",
+				"id": "hist",
+				"stat": "int"
+				},
+				  {
+				"name": "Insight",
+				"id": "insi",
+				"stat": "wis"
+				},
+				  {
+				"name": "Intimidation",
+				"id": "inti",
+				"stat": "cha"
+				},
+				  {
+				"name": "Investigation",
+				"id": "inve",
+				"stat": "int"
+				},
+				  {
+				"name": "Medicine",
+				"id": "medi",
+				"stat": "wis"
+				},
+				  {
+				"name": "Nature",
+				"id": "natu",
+				"stat": "int"
+				},
+				  {
+				"name": "Perception",
+				"id": "perc",
+				"stat": "wis"
+				},
+				  {
+				"name": "Perfomance",
+				"id": "perf",
+				"stat": "cha"
+				},
+				  {
+				"name": "Persuasion",
+				"id": "pers",
+				"stat": "cha"
+				},
+				  {
+				"name": "Religion",
+				"id": "reli",
+				"stat": "int"
+				},
+				  {
+				"name": "Sleight of Hand",
+				"id": "slei",
+				"stat": "dex"
+				},
+				  {
+				"name": "Stealth",
+				"id": "stea",
+				"stat": "dex"
+				},
+				  {
+				"name": "Survival",
+				"id": "surv",
+				"stat": "wis"
+				}
+			];
 
 			function calculateLevelAndProfis(exp) {
 				var level = 0;
-				levelTable.forEach((item,index,array)=>{
+				levelTableDefinition.forEach((item,index,array)=>{
 					if(exp >= item) {
 						level = index + 1;
 					}
@@ -48,17 +179,23 @@
 				return ({"lvl":level,"prf":prf});
 			}
 
+			function calculateBonus(value) {
+				return Math.floor((value-10)/2);
+			}
+
 			function StatsList(props) {
 				return (
-					<ul>
-						{props.stats.map((stat)=>(
-							<li key={stat.id}>
-								<h4>{stat.id}</h4>
-								+ {stat.bonus}
-								<input data-id={stat.id}  onChange={props.onChange} value={stat.value} />
-							</li>
-						))}
-					</ul>
+					<div>
+						<ul>
+							{props.statsDefinition.map((stat)=>(
+								<li key={stat.id}>
+									<h4>{stat.name}</h4>
+									+ {calculateBonus(props.playerStats[stat.id])}
+									<input data-id={stat.id}  onChange={props.onChange} value={props.playerStats[stat.id]} />
+								</li>
+							))}
+						</ul>
+					</div>
 				);
 			}
 			function SavThrowsList(props) {
@@ -66,7 +203,7 @@
 					<ul>
 						{props.savThrows.map((sav)=>(
 							<li key={sav.id}>
-								<input data-id={sav.id} checked={sav.savthrow} type="checkbox" value={sav.id} /> + {sav.savthrow?sav.bonus+props.prf:sav.bonus} {sav.id}
+								<input data-id={sav.id} disabled="disabled"   type="checkbox" checked={props.playerClass.savThrows[sav.id]} value={sav.id} /> + {props.playerClass.savThrows[sav.id]?calculateBonus(props.playerStats[sav.id])+props.prf:calculateBonus(props.playerStats[sav.id])} {sav.name}
 							</li>
 						))}
 					</ul>
@@ -89,9 +226,7 @@
 					this.setState((prevState)=>{
 						prevState.player.lvl = expData.lvl;
 						prevState.player.prf = expData.prf;
-						prevState.player.stats.map((stat)=>{
-							stat.bonus = Math.floor((stat.value-10)/2);
-						});
+						
 						return ({player:prevState.player});
 					});
 				}
@@ -114,12 +249,7 @@
 					var newValue = e.target.value;
 					if(0 <= newValue && newValue <= 20) {
 						this.setState((prevState)=>{
-							prevState.player.stats.forEach((item,index,array)=>{
-								if(item.id === statId){
-									array[index].value = newValue;
-									array[index].bonus = Math.floor((newValue-10)/2);
-								}
-							});
+							prevState.player.stats[statId] = newValue;
 
 							return ({player:prevState.player});
 						});
@@ -140,12 +270,20 @@
 				render() {
 					return (
 						<div>
-							<h3>{this.state.player.class} {this.state.player.lvl}</h3>
+							<h3>{this.state.player.class.name} {this.state.player.lvl}</h3>
 							<input data-id="name" onChange={this.handleNameChange} value={this.state.player.name}/> 
 							<input data-id="exp" onChange={this.handleExpChange} value={this.state.player.exp}/>
 							+{this.state.player.prf}
-							<StatsList stats={this.state.player.stats} onChange={this.handleStatChange} />
-							<SavThrowsList savThrows={this.state.player.stats} prf={this.state.player.prf} />
+							<div id="wrapper">
+								<div id="first">
+									<StatsList statsDefinition={statsDefinition} playerClass={this.state.player.class} playerStats={this.state.player.stats} onChange={this.handleStatChange} />
+								</div>
+								<div id="second">
+									<SavThrowsList savThrows={statsDefinition} playerClass={this.state.player.class} playerStats={this.state.player.stats} prf={this.state.player.prf} />
+								</div>
+								
+							</div>
+							
 						</div>
 					);
 				}
