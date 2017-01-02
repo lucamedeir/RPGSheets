@@ -209,6 +209,24 @@
 					</ul>
 				);
 			}
+			function SkillsList(props) {
+				return (
+					<ul>
+						{props.skillsDefinition.map((skill)=>(
+							<li key={skill.id}>
+								<input data-id={skill.id} data-n={props.playerSkills.n} onClick={props.onCheck} type="checkbox" checked={props.playerSkills.types[skill.id]} value={skill.id} /> + {props.playerSkills.types[skill.id]?calculateBonus(props.playerStats[skill.stat])+props.prf:calculateBonus(props.playerStats[skill.stat])}
+								 {
+								props.playerClass.allowedSkills[skill.id]?
+								<b>{skill.name}</b>
+								:
+								skill.name
+								}
+								
+							</li>
+						))}
+					</ul>
+				);
+			}
 
 			class Main extends React.Component {
 				constructor(props){
@@ -280,6 +298,7 @@
 								</div>
 								<div id="second">
 									<SavThrowsList savThrows={statsDefinition} playerClass={this.state.player.class} playerStats={this.state.player.stats} prf={this.state.player.prf} />
+									<SkillsList skillsDefinition={skillsDefinition} playerClass={this.state.player.class} playerStats={this.state.player.stats} playerSkills={this.state.player.skills} prf={this.state.player.prf} />
 								</div>
 								
 							</div>
