@@ -154,7 +154,7 @@
 					<ul>
 						{props.input.map((item)=>(
 							<li key={item.id}>
-								<input data-id={item.id} onChange={props.onCheck} type="checkbox" value={item.id} />{item.name}
+								<input checked={props.itemCheck[item.id]?true:false} data-id={item.id} onChange={props.onCheck} type="checkbox" value={item.id} />{item.name}
 							</li>
 						))}
 					</ul>
@@ -186,21 +186,30 @@
 				return (
 					<div>
 						<h1>Classes</h1>
+						Search: <input onChange={props.onSearch} value={props.search.text}/>
 						<ul>
 							{props.classes.map((aClass)=>(
+								
 								<li key={aClass["_id"]} id="wrapper">
-									 
-									 <h3>{aClass.name} has {aClass.nAllowedSkills} Skills</h3>
-									 <div id="wrapper">
-									 	<div id="first">
-									 		<AttrList items={skillsDefinition} idStamp={aClass._id} itemCheck={aClass.allowedSkills} />
-									 	</div>
-									 	<div id="second">
-									 		<AttrList items={statsDefinition} idStamp={aClass._id} itemCheck={aClass.savThrows} />
-									 	</div>
-									 </div>
-									<a href="" onClick={props.onDelete} data-id={aClass._id}  data-name={aClass.name}><img alt={"delete_"+aClass.name} src="/public/images/delete.png" width="15" height="15"/></a>								
+									{props.search.regex.test(aClass.name)?
+									<div>
+										 <h3>{aClass.name} has {aClass.nAllowedSkills} Skills</h3>
+										 <div id="wrapper">
+										 	<div id="first">
+										 		<AttrList items={skillsDefinition} idStamp={aClass._id} itemCheck={aClass.allowedSkills} />
+										 	</div>
+										 	<div id="second">
+										 		<AttrList items={statsDefinition} idStamp={aClass._id} itemCheck={aClass.savThrows} />
+										 	</div>
+										 </div>
+										<a href="" onClick={props.onDelete} data-id={aClass._id}  data-name={aClass.name}><img alt={"delete_"+aClass.name} src="/public/images/delete.png" width="15" height="15"/></a>								
+									</div>
+									:
+									""
+									}
 								</li>
+								
+								
 							))}
 						</ul>
 					</div>
@@ -219,6 +228,10 @@
 							allowedSkills:{},
 							nAllowedSkills:0
 						},
+						search: {
+							regex:/([A-z])\w+|([A-z])/,
+							text:""
+						},
 						classes:[]
 					};
 
@@ -228,6 +241,7 @@
 					this.handleNSkillsChange = this.handleNSkillsChange.bind(this);
 					this.handleNameChange = this.handleNameChange.bind(this);
 					this.handleDelete = this.handleDelete.bind(this);
+					this.handleSearch = this.handleSearch.bind(this);
 				}
 
 				componentDidMount() {
@@ -341,20 +355,32 @@
 					});
 				}
 
+				handleSearch(e) {
+					var newSearchText = e.currentTarget.value;
+					var newSearchTerm;
+					
+					if(!newSearchText) {
+						newSearchTerm = /([A-z])\w+|([A-z])/;
+					} else {
+						newSearchTerm = new RegExp("^"+newSearchText,'i');
+					}
+					this.setState({search:{text:newSearchText,regex:newSearchTerm}});
+				}
+
 				render() {
 					return (
 						<div id="wrapper">
 							<aside id="first">
 								<form onSubmit={this.handleSubmit}>
 									Name<input value={this.state.form.name} onChange={this.handleNameChange} /><br/>
-									<InputList onCheck={this.handleSavChange} input={statsDefinition}/>
-									<InputList onCheck={this.handleSkillsChange} input={skillsDefinition}/>
+									<InputList itemCheck={this.state.form.savThrows} onCheck={this.handleSavChange} input={statsDefinition}/>
+									<InputList itemCheck={this.state.form.allowedSkills} onCheck={this.handleSkillsChange} input={skillsDefinition}/>
 									Number of skills<input onChange={this.handleNSkillsChange} value={this.state.form.nAllowedSkills} /><br/>
 									<button>Submit</button>
 								</form>
 							</aside>
 							<article id="second">
-								<ClassesList onDelete={this.handleDelete} classes={this.state.classes} savThrows={statsDefinition} skills={skillsDefinition}/>
+								<ClassesList search={this.state.search}  onSearch={this.handleSearch} onDelete={this.handleDelete} classes={this.state.classes} savThrows={statsDefinition} skills={skillsDefinition}/>
 							</article>
 						</div>
 					);
