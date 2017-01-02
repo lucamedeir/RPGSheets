@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>RPG Sheets</title>
+		<script src="https://unpkg.com/react@15/dist/react.js"></script>
+		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
+		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+		<script src="http://localhost:8080/public/javascript/fetch-2.0.1.js"></script>
+		<style>
+			ul {
+			  list-style-type: none;
+			}
+			#wrapper {
+			    overflow: hidden; /* will contain if #first is longer than #second */
+			}
+			#first {
+			    float:left; /* add this */
+			}
+			#second {
+			    overflow: left; /* if you don't want #second to wrap below #first */
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="root"></div>
+		<script type="text/babel">
+			const statsDefinition = [
+				{name:"Strength",id:"str"},
+				{name:"Dexterity",id:"dex"},
+				{name:"Constitution",id:"con"},
+				{name:"Intelligence",id:"int"},
+				{name:"Wisdom",id:"wis"},
+				{name:"Charisma",id:"cha"}
+			];
+			const levelTableDefinition = [
+				0,
+				300,
+				900,
+				2700,
+				6500,
+				14000,
+				23000,
+				34000,
+				48000,
+				64000,
+				85000,
+				100000,
+				120000,
+				140000,
+				165000,
+				195000,
+				225000,
+				265000,
+				305000,
+				355000
+			];
+			const skillsDefinition = [
+				{
+				"name": "Acrobatics",
+				"id": "acro",
+				"stat": "dex"
+				},
+				  {
+				"name": "Animal Handling",
+				"id": "anim",
+				"stat": "wis"
+				},
+				  {
+				"name": "Arcana",
+				"id": "arca",
+				"stat": "int"
+				},
+				  {
+				"name": "Athletics",
+				"id": "athl",
+				"stat": "str"
+				},
+				  {
+				"name": "Deception",
+				"id": "dece",
+				"stat": "cha"
+				},
+				  {
+				"name": "History",
+				"id": "hist",
+				"stat": "int"
+				},
+				  {
+				"name": "Insight",
+				"id": "insi",
+				"stat": "wis"
+				},
+				  {
+				"name": "Intimidation",
+				"id": "inti",
+				"stat": "cha"
+				},
+				  {
+				"name": "Investigation",
+				"id": "inve",
+				"stat": "int"
+				},
+				  {
+				"name": "Medicine",
+				"id": "medi",
+				"stat": "wis"
+				},
+				  {
+				"name": "Nature",
+				"id": "natu",
+				"stat": "int"
+				},
+				  {
+				"name": "Perception",
+				"id": "perc",
+				"stat": "wis"
+				},
+				  {
+				"name": "Perfomance",
+				"id": "perf",
+				"stat": "cha"
+				},
+				  {
+				"name": "Persuasion",
+				"id": "pers",
+				"stat": "cha"
+				},
+				  {
+				"name": "Religion",
+				"id": "reli",
+				"stat": "int"
+				},
+				  {
+				"name": "Sleight of Hand",
+				"id": "slei",
+				"stat": "dex"
+				},
+				  {
+				"name": "Stealth",
+				"id": "stea",
+				"stat": "dex"
+				},
+				  {
+				"name": "Survival",
+				"id": "surv",
+				"stat": "wis"
+				}
+			];
+
+			function InputList(props) {
+				return (
+					<ul>
+						{props.input.map((item)=>(
+							<li key={item.id}>
+								<input data-id={item.id} onChange={props.onCheck} type="checkbox" value={item.id} />{item.name}
+							</li>
+						))}
+					</ul>
+				);
+			}
+
+			function AttrList(props) {
+				return (
+					<div>
+						<ul>
+							{props.items.map((item)=>(
+								<li key={item.id+props.idStamp}>
+									{
+									props.itemCheck[item.id]?
+									item.name
+									:
+									""
+									}
+									
+								</li>
+							))}
+						</ul>
+
+					</div>
+				);
+			}
+
+			function ClassesList(props) {
+				return (
+					<div>
+						<h1>Classes</h1>
+						<ul>
+							{props.classes.map((aClass)=>(
+								<li key={aClass["_id"]} id="wrapper">
+									 
+									 <h3>{aClass.name} has {aClass.nAllowedSkills} Skills</h3>
+									 <div id="wrapper">
+									 	<div id="first">
+									 		<AttrList items={skillsDefinition} idStamp={aClass._id} itemCheck={aClass.allowedSkills} />
+									 	</div>
+									 	<div id="second">
+									 		<AttrList items={statsDefinition} idStamp={aClass._id} itemCheck={aClass.savThrows} />
+									 	</div>
+									 </div>
+									<a href="" onClick={props.onDelete} data-id={aClass._id}  data-name={aClass.name}><img alt={"delete_"+aClass.name} src="/public/images/delete.png" width="15" height="15"/></a>								
+								</li>
+							))}
+						</ul>
+					</div>
+				);
+			}
+
+
+			class Main extends React.Component {
+				constructor(props){
+					super(props);
+
+					this.state = {
+						form : {
+							name:"",
+							savThrows:{},
+							allowedSkills:{},
+							nAllowedSkills:0
+						},
+						classes:[]
+					};
+
+					this.handleSubmit = this.handleSubmit.bind(this);
+					this.handleSavChange = this.handleSavChange.bind(this);
+					this.handleSkillsChange = this.handleSkillsChange.bind(this);
+					this.handleNSkillsChange = this.handleNSkillsChange.bind(this);
+					this.handleNameChange = this.handleNameChange.bind(this);
+					this.handleDelete = this.handleDelete.bind(this);
+				}
+
+				componentDidMount() {
+					fetch('/api/class').then((response)=>{
+						return response.json();
+					}).then((json)=>{
+						this.setState({classes:json});
+					});
+				}
+
+				handleSubmit(e) {
+					e.preventDefault();
+					var data = this.state.form;
+
+					if(this.state.form.name && this.state.form.savThrows && 
+					   this.state.form.allowedSkills && this.state.form.nAllowedSkills) {
+						fetch('/api/class', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({post:data})
+						}).then((response) =>{
+							if(response.status == 201) {
+								data["_id"] = new Date().toLocaleTimeString();
+								this.setState((prevState)=>({
+									classes: prevState.classes.concat(data),
+									form : {
+										name:"",
+										savThrows:{},
+										allowedSkills:{},
+										nAllowedSkills:0
+									}
+								}));
+							}
+						});
+					}
+				}
+
+				handleSavChange(e) {
+					var savThrowsId = e.target.dataset.id;
+					if(e.target.checked) {
+						this.setState((prevState)=>{
+							prevState.form.savThrows[savThrowsId] = true;
+							return ({form:prevState.form});
+						});
+					} else {
+						this.setState((prevState)=>{
+							delete prevState.form.savThrows[savThrowsId];
+							return ({form:prevState.form});
+						});
+					}
+				}
+				handleSkillsChange(e) {
+					var allowedSkillsId = e.target.dataset.id;
+					if(e.target.checked) {
+						this.setState((prevState)=>{
+							prevState.form.allowedSkills[allowedSkillsId] = true;
+							return ({form:prevState.form});
+						});
+					} else {
+						this.setState((prevState)=>{
+							delete prevState.form.allowedSkills[allowedSkillsId];
+							return ({form:prevState.form});
+						});
+					}
+				}
+
+				handleNSkillsChange(e) {
+					var value = e.target.value;
+					this.setState((prevState)=>{
+						prevState.form.nAllowedSkills = value;
+						return ({form:prevState.form});
+					});
+				}
+
+				handleNameChange(e){
+					var name = e.target.value;
+					this.setState((prevState)=>{
+						prevState.form.name= name;
+						return ({form:prevState.form});
+					});
+				}
+
+				handleDelete(e) {
+					e.preventDefault();
+					var classId = e.currentTarget.dataset.id;
+					var className = e.currentTarget.dataset.name;
+
+					fetch('/api/class', {
+						method: 'DELETE',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							query:{name: className}
+						})
+					}).then((response) =>{
+						if(response.status == 200) {
+							this.setState((prevState)=>{
+								var modifiedClasses = prevState.classes.slice(0);
+								modifiedClasses.forEach((aClass,index,classes)=>{
+									if(aClass["_id"] === classId){
+										prevState.classes.splice(index,1);
+									}
+								});
+
+								return ({classes:prevState.classes})
+							});
+						}
+					});
+				}
+
+				render() {
+					return (
+						<div id="wrapper">
+							<aside id="first">
+								<form onSubmit={this.handleSubmit}>
+									Name<input value={this.state.form.name} onChange={this.handleNameChange} /><br/>
+									<InputList onCheck={this.handleSavChange} input={statsDefinition}/>
+									<InputList onCheck={this.handleSkillsChange} input={skillsDefinition}/>
+									Number of skills<input onChange={this.handleNSkillsChange} value={this.state.form.nAllowedSkills} /><br/>
+									<button>Submit</button>
+								</form>
+							</aside>
+							<article id="second">
+								<ClassesList onDelete={this.handleDelete} classes={this.state.classes} savThrows={statsDefinition} skills={skillsDefinition}/>
+							</article>
+						</div>
+					);
+				}
+			}
+
+			ReactDOM.render(
+			  <Main />,
+			  document.getElementById('root')
+			);
+		</script>
+	</body>
+</html>
