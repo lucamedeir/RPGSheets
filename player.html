@@ -42,7 +42,26 @@
 					reli:true
 				}
 			};
+
+			const playerRace =  {
+				name:"half-orc",
+				speed:30,
+				abilityScoreIncrease:{
+					str:2,
+					dex:0,
+					con:1,
+					int:0,
+					wis:0,
+					cha:0
+				},
+				languages:{
+					common:true,
+					orc:true
+				}
+			};
+
 			player.class = playerClass;
+			player.race = playerRace;
 
 			const statsDefinition = [
 				{name:"Strength",id:"str"},
@@ -190,8 +209,8 @@
 							{props.statsDefinition.map((stat)=>(
 								<li key={stat.id}>
 									<h4>{stat.name}</h4>
-									+ {calculateBonus(props.playerStats[stat.id])}
-									<input data-id={stat.id}  onChange={props.onChange} value={props.playerStats[stat.id]} />
+									+ {calculateBonus(parseFloat(props.playerStats[stat.id])+parseFloat(props.playerRace.abilityScoreIncrease[stat.id]))}<br/>
+									<input data-id={stat.id}  onChange={props.onChange} value={props.playerStats[stat.id]} />{parseFloat(props.playerStats[stat.id])+parseFloat(props.playerRace.abilityScoreIncrease[stat.id])}
 								</li>
 							))}
 						</ul>
@@ -203,7 +222,7 @@
 					<ul>
 						{props.savThrows.map((sav)=>(
 							<li key={sav.id}>
-								<input data-id={sav.id} disabled="disabled"   type="checkbox" checked={props.playerClass.savThrows[sav.id]} value={sav.id} /> + {props.playerClass.savThrows[sav.id]?calculateBonus(props.playerStats[sav.id])+props.prf:calculateBonus(props.playerStats[sav.id])} {sav.name}
+								<input data-id={sav.id} disabled="disabled" type="checkbox" checked={props.playerClass.savThrows[sav.id]} value={sav.id} /> + {props.playerClass.savThrows[sav.id]?calculateBonus(props.playerStats[sav.id])+props.prf:calculateBonus(props.playerStats[sav.id])} {sav.name}
 							</li>
 						))}
 					</ul>
@@ -215,7 +234,7 @@
 						<ul>
 							{props.skillsDefinition.map((skill)=>(
 								<li key={skill.id}>
-									<input data-id={skill.id} data-stat={skill.stat} onClick={props.onCheck} type="checkbox" checked={props.playerSkills.types[skill.id]} value={skill.id} /> + {props.playerSkills.types[skill.id]?calculateBonus(props.playerStats[skill.stat])+props.prf:calculateBonus(props.playerStats[skill.stat])}
+									<input data-id={skill.id} data-stat={skill.stat} onChange={props.onCheck} type="checkbox" checked={props.playerSkills.types[skill.id]} value={skill.id} /> + {props.playerSkills.types[skill.id]?calculateBonus(props.playerStats[skill.stat])+props.prf:calculateBonus(props.playerStats[skill.stat])}
 									 {
 									props.playerClass.allowedSkills[skill.id]?
 									<b>{skill.name}</b>
@@ -269,7 +288,7 @@
 				handleStatChange(e){
 					var statId = e.target.dataset.id;
 					var newValue = e.target.value;
-					if(0 <= newValue && newValue <= 20) {
+					if(true) {
 						this.setState((prevState)=>{
 							prevState.player.stats[statId] = newValue;
 
@@ -315,13 +334,21 @@
 				render() {
 					return (
 						<div>
-							<h3>{this.state.player.class.name} {this.state.player.lvl}</h3>
-							<input data-id="name" onChange={this.handleNameChange} value={this.state.player.name}/> 
-							<input data-id="exp" onChange={this.handleExpChange} value={this.state.player.exp}/>
-							+{this.state.player.prf}
 							<div id="wrapper">
 								<div id="first">
-									<StatsList statsDefinition={statsDefinition} playerClass={this.state.player.class} playerStats={this.state.player.stats} onChange={this.handleStatChange} />
+									<input data-id="name" onChange={this.handleNameChange} value={this.state.player.name}/> 
+								</div>
+								<div id="second">
+									{this.state.player.class.name} {this.state.player.lvl} <br/>
+									{this.state.player.race.name} 
+									<input data-id="exp" onChange={this.handleExpChange} value={this.state.player.exp}/>
+								</div>
+							</div>
+							
+							Proficiency +{this.state.player.prf}
+							<div id="wrapper">
+								<div id="first">
+									<StatsList statsDefinition={statsDefinition} playerRace={this.state.player.race} playerStats={this.state.player.stats} onChange={this.handleStatChange} />
 								</div>
 								<div id="second">
 									<SavThrowsList savThrows={statsDefinition} playerClass={this.state.player.class} playerStats={this.state.player.stats} prf={this.state.player.prf} />
