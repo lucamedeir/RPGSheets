@@ -140,33 +140,99 @@ var RoutePlayer = function(request,response,data,PageHandler) {
 	var worldName = urlParts[1];
 	var playerName = urlParts[2];
 
-	queryDocument('worlds',{"name":worldName},(err,worldDocs)=>{
+	var world;
+	var player;
+	var pRace;
+	var pClass;
+	var classes;
+	var races;
+	var erro = false;
+	var proceed = true;
+	var serverAccess = 0;
+	const nOfServerAccess = 6;
+	var sendResponse = false;
+
+	var filePath = "./player.html";
+
+	globalDB.collection("worlds").findOne({"name":worldName},{"name":true},(err,worldDoc)=>{
 		if(!err) {
-			if(worldDocs.length) {
-				var filePath = "./player.html";
-				globalDB.collection('players').findOne({"name":playerName,"worldName":worldName},(err,playerDoc)=>{
-					if(!err) {
-						if(playerDoc){
-							globalDB.collection('races').findOne({"name":playerDoc.raceName},(err,raceDoc)=>{
-								if(!err) {
-									globalDB.collection('classes').findOne({"name":playerDoc.className},(err,classDoc)=>{
-										if(!err) {
-											PageHandler(200,response,filePath,(page)=>{
-												playerDoc.class = classDoc;
-												playerDoc.race = raceDoc;
-												console.log(playerDoc);
-												return page.replace(/<SERVER_REPLACE_PLAYER>/g,JSON.stringify(playerDoc));
-											});
-										} else PageHandler(500,response);
-									});
-								} else PageHandler(500,response);
-							});
-						} else PageHandler(404,response);
-					}else PageHandler(500,response);
-				});
-			} else PageHandler(404,response);
-		} else PageHandler(500,response);
+			if(worldDoc) {
+				world = worldDoc;
+				serverAccess++;
+				if(serverAccess == nOfServerAccess) {
+					sendResponse = true;
+				}
+			} else proceed = false;
+		} else erro = true;
 	});
+
+	globalDB.collection("players").findOne({"name":playerName,"worldName":worldName},(err,playerDoc)=>{
+		if(!err) {
+			if(playerDoc) {
+				player = playerDoc;
+				serverAccess++;
+				if(serverAccess == nOfServerAccess) {
+					sendResponse = true;
+				}
+				globalDB.collection('races').findOne({"name":player.raceName},(err,raceDoc)=>{
+					if(!err) {
+						pRace = raceDoc;
+						serverAccess++;
+						if(serverAccess == nOfServerAccess) {
+							sendResponse = true;
+						}
+					} else erro = true;
+				});
+
+				globalDB.collection('classes').findOne({"name":player.className},(err,classDoc)=>{
+					if(!err) {
+						pClass = classDoc;
+						serverAccess++;
+						if(serverAccess == nOfServerAccess) {
+							sendResponse = true;
+						}
+					} else erro = true;
+				});
+			} else proceed = false;
+		} else erro = true;
+	});
+
+	globalDB.collection('races').find({}).toArray((err,raceDocs)=>{
+		if(!err) {
+			races = raceDocs;
+			serverAccess++;
+			if(serverAccess == nOfServerAccess) {
+				sendResponse = true;
+			}
+		} else erro = true;
+	});
+
+	globalDB.collection('classes').find({}).toArray((err,classDocs)=>{
+		if(!err) {
+			classes = classDocs;
+			serverAccess++;
+			if(serverAccess == nOfServerAccess) {
+				sendResponse = true;
+			}
+		} else erro = true;
+	});
+
+	var timerHandle = setInterval(()=>{
+		if(erro) {
+			PageHandler(500,response);
+			clearInterval(timerHandle);
+		} else if(!proceed) {
+			PageHandler(404,response);
+			clearInterval(timerHandle);
+		} else if (sendResponse) {
+			PageHandler(200,response,filePath,(page)=>{
+				player.class = pClass;
+				player.race = pRace;
+				return page.replace(/<SERVER_REPLACE_PLAYER>/g,JSON.stringify(player)).replace(/<SERVER_REPLACE_CLASSES>/g,JSON.stringify(classes)).replace(/<SERVER_REPLACE_RACES>/g,JSON.stringify(races));
+			});
+			clearInterval(timerHandle);
+		}
+	},10);
 };
 
 var RouteApiWorld = function(request, response, data, PageHandler) {

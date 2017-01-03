@@ -28,6 +28,8 @@
 		<div id="root"></div>
 		<script type="text/babel">
 			const player = <SERVER_REPLACE_PLAYER>;
+			const classes = <SERVER_REPLACE_CLASSES>;
+			const races = <SERVER_REPLACE_RACES>;
 
 			const statsDefinition = [
 				{name:"Strength",id:"str"},
@@ -225,6 +227,8 @@
 					this.handleNameChange = this.handleNameChange.bind(this);
 					this.handleStatChange = this.handleStatChange.bind(this);
 					this.handleSkillCheck = this.handleSkillCheck.bind(this);
+					this.handleRaceChange = this.handleRaceChange.bind(this);
+					this.handleClassChange = this.handleClassChange.bind(this);
 				}
 
 
@@ -297,6 +301,37 @@
 					});
 				}
 
+				handleRaceChange(e) {
+					var newRaceId = e.target.value;
+					this.setState((prevState)=>{
+						races.forEach((race,index,array)=>{
+							if(newRaceId === race["_id"]) {
+								prevState.player.raceName = race.name;
+								prevState.player.raceId = race["_id"];
+								prevState.player.race = race;
+							}
+						});
+						
+						return ({form:prevState.form});
+					});
+				}
+
+				handleClassChange(e) {
+					var newClassId = e.target.value;
+					this.setState((prevState)=>{
+						classes.forEach((aClass,index,array)=>{
+							if(newClassId === aClass["_id"]) {
+								prevState.player.raceName = aClass.name;
+								prevState.player.classId = aClass["_id"];
+								prevState.player.class = aClass;
+								prevState.player.skills = {n:0,types:{}};
+							}
+						});
+						
+						return ({form:prevState.form});
+					});
+				}
+
 				render() {
 					return (
 						<div>
@@ -305,8 +340,16 @@
 									<input data-id="name" onChange={this.handleNameChange} value={this.state.player.name}/> 
 								</div>
 								<div id="second">
-									{this.state.player.class.name} {this.state.player.lvl} <br/>
-									{this.state.player.race.name} 
+									<select value={this.state.player.classId}  onChange={this.handleClassChange}>
+										{classes.map((aClass)=>(
+											<option key={aClass["_id"]} value={aClass["_id"]} >{aClass.name}</option>
+										))}
+									</select> {this.state.player.lvl} <br/>
+									<select value={this.state.player.raceId}  onChange={this.handleRaceChange}>
+										{races.map((aRace)=>(
+											<option key={aRace["_id"]} value={aRace["_id"]} >{aRace.name}</option>
+										))}
+									</select>
 									<input data-id="exp" onChange={this.handleExpChange} value={this.state.player.exp}/>
 								</div>
 							</div>
