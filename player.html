@@ -185,24 +185,47 @@
 					</div>
 				);
 			}
-			function SavThrowsList(props) {
-				return (
-					<ul>
-						{props.savThrows.map((sav)=>(
-							<li key={sav.id}>
-								<input data-id={sav.id} disabled="disabled" type="checkbox" checked={props.playerClass.savThrows[sav.id]} value={sav.id} /> + {props.playerClass.savThrows[sav.id]?calculateBonus(props.playerStats[sav.id])+props.prf:calculateBonus(props.playerStats[sav.id])} {sav.name}
-							</li>
-						))}
-					</ul>
-				);
+
+			class SavingThrowsList extends React.Component {
+				constructor(props) {
+					super(props);
+
+					this.state = {
+						statusListName:props.statusListName,
+						timeStamp : new Date().toLocaleTimeString()
+					};
+				}
+
+				calculateStatusBonus(id) {
+					var bonus;
+					if(this.props.player.class.savThrows[id]) {
+						bonus = calculateBonus(parseFloat(this.props.player.stats[id])+parseFloat(this.props.player.race.abilityScoreIncrease[id]))+parseFloat(this.props.player.prf);
+					} else {
+						bonus = calculateBonus(parseFloat(this.props.player.stats[id])+parseFloat(this.props.player.race.abilityScoreIncrease[id]));
+					}
+					return bonus;
+				}
+
+				render() {
+					return (
+						<ul>
+							{this.props.statusListName.map((stat)=>(
+								<li key={stat.id+this.state.timeStamp}>
+									<input data-id={stat.id} disabled="disabled" type="checkbox" checked={this.props.player.class.savThrows[stat.id]?true:false} value={stat.id} /> + {this.calculateStatusBonus(stat.id)} {stat.name}
+								</li>
+							))}
+						</ul>
+					);
+				}
 			}
+
 			function SkillsList(props) {
 				return (
 					<div>
 						<ul>
 							{props.skillsDefinition.map((skill)=>(
 								<li key={skill.id}>
-									<input data-id={skill.id} data-stat={skill.stat} onChange={props.onCheck} type="checkbox" checked={props.playerSkills.types[skill.id]} value={skill.id} /> + {props.playerSkills.types[skill.id]?calculateBonus(props.playerStats[skill.stat])+props.prf:calculateBonus(props.playerStats[skill.stat])}
+									<input data-id={skill.id} data-stat={skill.stat} onChange={props.onCheck} type="checkbox" checked={props.playerSkills.types[skill.id]} value={skill.id} /> + {props.playerSkills.types[skill.id]?calculateBonus(parseFloat(props.playerStats[skill.stat])+parseFloat(props.playerRace.abilityScoreIncrease[skill.stat]))+props.prf:calculateBonus(parseFloat(props.playerStats[skill.stat])+parseFloat(props.playerRace.abilityScoreIncrease[skill.stat]))}
 									 {
 									props.playerClass.allowedSkills[skill.id]?
 									<b>{skill.name}</b>
@@ -222,7 +245,10 @@
 				constructor(props){
 					super(props);
 
-					this.state = {"player":props.player};
+					var thePlayer = props.player;
+					thePlayer.prf = 2;
+					thePlayer.lvl = 1;
+					this.state = {"player":thePlayer};
 					this.handleExpChange = this.handleExpChange.bind(this);
 					this.handleNameChange = this.handleNameChange.bind(this);
 					this.handleStatChange = this.handleStatChange.bind(this);
@@ -327,6 +353,7 @@
 								prevState.player.skills = {n:0,types:{}};
 							}
 						});
+
 						
 						return ({form:prevState.form});
 					});
@@ -360,8 +387,8 @@
 									<StatsList statsDefinition={statsDefinition} playerRace={this.state.player.race} playerStats={this.state.player.stats} onChange={this.handleStatChange} />
 								</div>
 								<div id="second">
-									<SavThrowsList savThrows={statsDefinition} playerClass={this.state.player.class} playerStats={this.state.player.stats} prf={this.state.player.prf} />
-									<SkillsList skillsDefinition={skillsDefinition} onCheck={this.handleSkillCheck} playerClass={this.state.player.class} playerStats={this.state.player.stats} playerSkills={this.state.player.skills} prf={this.state.player.prf} />
+									<SavingThrowsList statusListName={statsDefinition} player={this.state.player} />
+									<SkillsList skillsDefinition={skillsDefinition} onCheck={this.handleSkillCheck} playerClass={this.state.player.class} playerRace={this.state.player.race} playerStats={this.state.player.stats} playerSkills={this.state.player.skills} prf={this.state.player.prf} />
 								</div>
 								
 							</div>
