@@ -24,7 +24,6 @@
 								<li key={player.name}>
 									<div>
 										<a href="" onClick={this.props.onClickDelete} data-id={player.name} ><img alt={"delete_"+player.name} src="/public/images/delete.png" width="15" height="15"/></a>
-										<a href="" onClick={this.props.onClickEdit} data-id={player.name} ><img alt={"edit_"+player.name} src="/public/images/edit.png" width="15" height="15"/></a>
 										<a href={player.url} target="_top">{player.name},  The {player.raceName} {player.className}</a>
 									</div>
 								</li>
@@ -81,7 +80,7 @@
 									raceName: this.state.form.pRace.name,
 									className: this.state.form.pClass.name,
 									raceId: this.state.form.pRace["_id"],
-									classId: this.state.form.pRace["_id"],
+									classId: this.state.form.pClass["_id"],
 									stats:{
 										str:0,
 										dex:0,
@@ -101,13 +100,15 @@
 							if(response.status == 201) {
 								var newplayer = {
 									name:this.state.form.name,
+									className:this.state.form.pClass.name,
+									raceName:this.state.form.pRace.name,
 									modifiableName:this.state.form.name,
 									url: "/"+worldName+"/"+this.state.form.name,
 									isEditting:false
 									};
 								this.setState((prevState)=>({
 									players: prevState.players.concat(newplayer),
-									form:{name:''}
+									form:{name:'',pClass:classes[0],pRace:races[0]}
 								}));
 							}
 						});
@@ -150,20 +151,6 @@
 								return ({players:prevState.players})
 							});
 						}
-					});
-				}
-
-				handleEdit(e){
-					e.preventDefault();
-					var playerName = e.currentTarget.dataset.id;
-					this.setState((prevState)=>{
-						prevState.players.forEach((player,index,players)=>{
-							if(player.name === playerName) {
-								players[index].isEditting = true;
-							}
-						});
-
-						return ({players:prevState.players})
 					});
 				}
 
