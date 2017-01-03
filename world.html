@@ -7,13 +7,19 @@
 		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
 		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 		<script src="http://localhost:8080/public/javascript/fetch-2.0.1.js"></script>
+		<style>
+			ul {
+			  list-style-type: none;
+			}
+		</style>
 	</head>
 
 	<body>
 		<div id="root"></div>
 		<script type="text/babel">
-		const classes = <SERVER_REPLACE_CLASSES>;
-		const races = <SERVER_REPLACE_RACES>;
+			const classes = <SERVER_REPLACE_CLASSES>;
+			const races = <SERVER_REPLACE_RACES>;
+			const world = <SERVER_REPLACE_WORLD>;
 
 
 			class PlayerList extends React.Component {
@@ -33,7 +39,7 @@
 				}
 			}
 
-			const worldName = "<SERVER_REPLACE_WORLD_NAME>";
+			
 
 			class Main extends React.Component {
 				constructor(props) {
@@ -49,16 +55,16 @@
 				}
 
 				componentDidMount() {
-					fetch('/api/player?world='+worldName).then((response)=>{
+					fetch('/api/player?worldName='+world.name).then((response)=>{
 						return response.json();
 					}).then((json)=>{
 						this.setState({players:json.map((player)=>({
 							name:player.name,
-							world:player.world,
+							worldName:player.worldName,
 							className:player.className,
 							raceName:player.raceName,
 							modifiableName:player.name,
-							url:"/"+player.world+"/"+player.name,
+							url:"/"+player.worldName+"/"+player.name,
 							isEditting:false
 						}))});
 					});
@@ -75,7 +81,8 @@
 							body: JSON.stringify({
 								post:{
 									name: this.state.form.name,
-									world:worldName,
+									worldName:world.name,
+									worldId:world["_id"],
 									exp:0,
 									raceName: this.state.form.pRace.name,
 									className: this.state.form.pClass.name,
@@ -103,7 +110,7 @@
 									className:this.state.form.pClass.name,
 									raceName:this.state.form.pRace.name,
 									modifiableName:this.state.form.name,
-									url: "/"+worldName+"/"+this.state.form.name,
+									url: "/"+world.name+"/"+this.state.form.name,
 									isEditting:false
 									};
 								this.setState((prevState)=>({
@@ -183,7 +190,7 @@
 				render () {
 					return (
 						<div>
-							<h1>{worldName}</h1>
+							<h1>{world.name}</h1>
 							<PlayerList onClickDelete={this.handleDelete}  players={this.state.players} />
 							<form onSubmit={this.handleCreate}>
 								<input onChange={this.handleChange} value={this.state.form.name} />
