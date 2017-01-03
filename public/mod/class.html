@@ -34,28 +34,6 @@
 				{name:"Wisdom",id:"wis"},
 				{name:"Charisma",id:"cha"}
 			];
-			const levelTableDefinition = [
-				0,
-				300,
-				900,
-				2700,
-				6500,
-				14000,
-				23000,
-				34000,
-				48000,
-				64000,
-				85000,
-				100000,
-				120000,
-				140000,
-				165000,
-				195000,
-				225000,
-				265000,
-				305000,
-				355000
-			];
 			const skillsDefinition = [
 				{
 				"name": "Acrobatics",
@@ -372,10 +350,10 @@
 						<div id="wrapper">
 							<aside id="first">
 								<form onSubmit={this.handleSubmit}>
-									Name<input value={this.state.form.name} onChange={this.handleNameChange} /><br/>
+									Name: <input value={this.state.form.name} onChange={this.handleNameChange} /><br/>
 									<InputList itemCheck={this.state.form.savThrows} onCheck={this.handleSavChange} input={statsDefinition}/>
 									<InputList itemCheck={this.state.form.allowedSkills} onCheck={this.handleSkillsChange} input={skillsDefinition}/>
-									Number of skills<input onChange={this.handleNSkillsChange} value={this.state.form.nAllowedSkills} /><br/>
+									Number of skills: <input onChange={this.handleNSkillsChange} value={this.state.form.nAllowedSkills} /><br/>
 									<button>Submit</button>
 								</form>
 							</aside>

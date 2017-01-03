@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>RPG Sheets</title>
+		<script src="https://unpkg.com/react@15/dist/react.js"></script>
+		<script src="https://unpkg.com/react-dom@15/dist/react-dom.js"></script>
+		<script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+		<script src="http://localhost:8080/public/javascript/fetch-2.0.1.js"></script>
+		<style>
+			ul {
+			  list-style-type: none;
+			}
+			#wrapper {
+			    overflow: hidden; /* will contain if #first is longer than #second */
+			}
+			#first {
+			    float:left; /* add this */
+			}
+			#second {
+			    overflow: left; /* if you don't want #second to wrap below #first */
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="root"></div>
+		<script type="text/babel">
+			const statsDefinition = [
+				{name:"Strength",id:"str"},
+				{name:"Dexterity",id:"dex"},
+				{name:"Constitution",id:"con"},
+				{name:"Intelligence",id:"int"},
+				{name:"Wisdom",id:"wis"},
+				{name:"Charisma",id:"cha"}
+			];
+
+			function InputList(props) {
+				return (
+					<ul>
+						{props.input.map((item)=>(
+							<li key={item.id}>
+								<input data-id={item.id} onChange={props.onChange} value={props.itemValue[item.id]} />{item.name}
+							</li>
+						))}
+					</ul>
+				);
+			}
+
+			function RacesList(props) {
+				return (
+					<div>
+						<h1>Races</h1>
+						Search: <input onChange={props.onSearch} value={props.search.text}/>
+						<ul>
+							{props.races.map((race)=>(
+								<li key={race["_id"]} id="wrapper">
+									{props.search.regex.test(race.name)?
+									<div>
+										<h3>{race.name} has {race.speed} feet for speed</h3>
+								 		<ul>
+								 			{props.abilities.map((ability)=>(
+								 				<li key={ability.id}>
+								 					+{race.abilityScoreIncrease[ability.id]} {ability.name}
+								 				</li>
+								 			))}
+								 		</ul>
+										<a href="" onClick={props.onDelete} data-id={race._id}  data-name={race.name}><img alt={"delete_"+race.name} src="/public/images/delete.png" width="15" height="15"/></a>								
+									</div>
+									:
+									""
+									}
+								</li>
+							))}
+						</ul>
+					</div>
+				);
+			}
+
+
+			class Main extends React.Component {
+				constructor(props){
+					super(props);
+
+					this.state = {
+						form : {
+							name:"",
+							abilityScoreIncrease:{
+								str:0,
+								dex:0,
+								con:0,
+								int:0,
+								wis:0,
+								cha:0
+							},
+							speed:0
+						},
+						search: {
+							regex:/([A-z])\w+|([A-z])/,
+							text:""
+						},
+						races:[]
+					};
+
+					this.handleSubmit = this.handleSubmit.bind(this);
+					this.handleAbilityScoreChange = this.handleAbilityScoreChange.bind(this);
+					this.handleSpeedChange = this.handleSpeedChange.bind(this);
+					this.handleNameChange = this.handleNameChange.bind(this);
+					this.handleDelete = this.handleDelete.bind(this);
+					this.handleSearch = this.handleSearch.bind(this);
+				}
+
+				componentDidMount() {
+					fetch('/api/race').then((response)=>{
+						return response.json();
+					}).then((json)=>{
+						this.setState({races:json});
+					});
+				}
+
+				handleSubmit(e) {
+					e.preventDefault();
+					var data = this.state.form;
+
+					if(this.state.form.name && this.state.form.speed ) {
+						fetch('/api/race', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({post:data})
+						}).then((response) =>{
+							if(response.status == 201) {
+								data["_id"] = new Date().toLocaleTimeString();
+								this.setState((prevState)=>({
+									races: prevState.races.concat(data),
+									form : {
+										name:"",
+										abilityScoreIncrease:{
+											str:0,
+											dex:0,
+											con:0,
+											int:0,
+											wis:0,
+											cha:0
+										},
+										speed:0
+									}
+								}));
+							}
+						});
+					}
+				}
+
+				handleAbilityScoreChange(e) {
+					var abilityScoreId = e.target.dataset.id;
+					var value = e.target.value;
+					this.setState((prevState)=>{
+						prevState.form.abilityScoreIncrease[abilityScoreId] = parseFloat(value);
+						return ({form:prevState.form});
+					});
+				}
+
+				handleSpeedChange(e) {
+					var value = e.target.value;
+					this.setState((prevState)=>{
+						prevState.form.speed = parseFloat(value);
+						return ({form:prevState.form});
+					});
+				}
+
+				handleNameChange(e){
+					var name = e.target.value;
+					this.setState((prevState)=>{
+						prevState.form.name= name;
+						return ({form:prevState.form});
+					});
+				}
+
+				handleDelete(e) {
+					e.preventDefault();
+					var raceId = e.currentTarget.dataset.id;
+					var raceName = e.currentTarget.dataset.name;
+
+					fetch('/api/race', {
+						method: 'DELETE',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							query:{name: raceName}
+						})
+					}).then((response) =>{
+						if(response.status == 200) {
+							this.setState((prevState)=>{
+								var modifiedraces = prevState.races.slice(0);
+								modifiedraces.forEach((race,index,races)=>{
+									if(race["_id"] === raceId){
+										prevState.races.splice(index,1);
+									}
+								});
+
+								return ({races:prevState.races})
+							});
+						}
+					});
+				}
+
+				handleSearch(e) {
+					var newSearchText = e.currentTarget.value;
+					var newSearchTerm;
+					
+					if(!newSearchText) {
+						newSearchTerm = /([A-z])\w+|([A-z])/;
+					} else {
+						newSearchTerm = new RegExp("^"+newSearchText,'i');
+					}
+					this.setState({search:{text:newSearchText,regex:newSearchTerm}});
+				}
+
+				render() {
+					return (
+						<div id="wrapper">
+							<aside id="first">
+								<form onSubmit={this.handleSubmit}>
+									Name: <input value={this.state.form.name} onChange={this.handleNameChange} /><br/>
+									<InputList itemValue={this.state.form.abilityScoreIncrease} onChange={this.handleAbilityScoreChange} input={statsDefinition}/>
+									Speed: <input onChange={this.handleSpeedChange} value={this.state.form.speed} /><br/>
+									<button>Submit</button>
+								</form>
+							</aside>
+							<article id="second">
+								<RacesList search={this.state.search}  onSearch={this.handleSearch} onDelete={this.handleDelete} races={this.state.races} abilities={statsDefinition}/>
+							</article>
+						</div>
+					);
+				}
+			}
+
+			ReactDOM.render(
+			  <Main />,
+			  document.getElementById('root')
+			);
+		</script>
+	</body>
+</html>

@@ -1,7 +1,7 @@
 {
   "name": "rpgsheets",
   "version": "0.0.9",
-  "description": "This is an online RPG sheets (D&D5) developed in node.js, React and mongoDB.",
+  "description": "This is an online RPG sheets (D&D5) developed in node.js, React, fetch, and mongoDB.",
   "main": "server.js",
   "scripts": {
     "test": "echo 'Error: no test specified' && exit 1",
