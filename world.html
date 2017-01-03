@@ -22,21 +22,11 @@
 						<ul>
 							{this.props.players.map(player=>(
 								<li key={player.name}>
-									{
-									player.isEditting?
-										<div>
-											<form data-id={player.name} onSubmit={this.props.onConfirmEdition}>
-												<input data-id={player.name} value={player.modifiableName} onChange={this.props.onEditChange} />
-												<button>ok</button>
-											</form>
-										</div>
-									:
-										<div>
-											<a href="" onClick={this.props.onClickDelete} data-id={player.name} ><img alt={"delete_"+player.name} src="/public/images/delete.png" width="15" height="15"/></a>
-											<a href="" onClick={this.props.onClickEdit} data-id={player.name} ><img alt={"edit_"+player.name} src="/public/images/edit.png" width="15" height="15"/></a>
-											<a href={player.url} target="_top">{player.name}</a>
-										</div>
-									}
+									<div>
+										<a href="" onClick={this.props.onClickDelete} data-id={player.name} ><img alt={"delete_"+player.name} src="/public/images/delete.png" width="15" height="15"/></a>
+										<a href="" onClick={this.props.onClickEdit} data-id={player.name} ><img alt={"edit_"+player.name} src="/public/images/edit.png" width="15" height="15"/></a>
+										<a href={player.url} target="_top">{player.name},  The {player.raceName} {player.className}</a>
+									</div>
 								</li>
 							))}
 						</ul>
@@ -52,12 +42,11 @@
 					
 					this.handleCreate = this.handleCreate.bind(this);
 					this.handleChange = this.handleChange.bind(this);
+					this.handleRaceChange = this.handleRaceChange.bind(this);
 					this.handleDelete = this.handleDelete.bind(this);
-					this.handleEdit = this.handleEdit.bind(this);
-					this.handleConfirmEdition = this.handleConfirmEdition.bind(this);
-					this.handleEditionChange = this.handleEditionChange.bind(this);
+					this.handleClassChange = this.handleClassChange.bind(this);
 
-					this.state = {players:[], form:{name:''}};
+					this.state = {players:[], form:{name:'',pClass:classes[0],pRace:races[0]}};
 				}
 
 				componentDidMount() {
@@ -67,6 +56,8 @@
 						this.setState({players:json.map((player)=>({
 							name:player.name,
 							world:player.world,
+							className:player.className,
+							raceName:player.raceName,
 							modifiableName:player.name,
 							url:"/"+player.world+"/"+player.name,
 							isEditting:false
@@ -83,7 +74,28 @@
 								'Content-Type': 'application/json'
 							},
 							body: JSON.stringify({
-								post:{name: this.state.form.name,world:worldName,exp:0}
+								post:{
+									name: this.state.form.name,
+									world:worldName,
+									exp:0,
+									raceName: this.state.form.pRace.name,
+									className: this.state.form.pClass.name,
+									raceId: this.state.form.pRace["_id"],
+									classId: this.state.form.pRace["_id"],
+									stats:{
+										str:0,
+										dex:0,
+										con:0,
+										int:0,
+										wis:0,
+										cha:0
+									},
+									skills:{
+										n:0,
+										types:{}
+									}
+
+								}
 							})
 						}).then((response) =>{
 							if(response.status == 201) {
@@ -104,7 +116,12 @@
 				}
 
 				handleChange(e) {
-					this.setState({form:{name:e.target.value}});
+					var newName = e.target.value;
+					this.setState((prevState)=>{
+						prevState.form.name = newName;
+						
+						return ({form:prevState.form});
+					});
 				}
 
 				handleDelete(e) {
@@ -150,57 +167,29 @@
 					});
 				}
 
-				handleConfirmEdition(e) {
-					e.preventDefault();
-					var playerName = e.currentTarget.dataset.id;
-					this.state.players.forEach((player,index,players)=>{
-						if(player.name === playerName) {
-							if(!(player.name === player.modifiableName)){
-								fetch('/api/player', {
-									method: 'PATCH',
-									headers: {
-										'Content-Type': 'application/json'
-									},
-									body: JSON.stringify({
-										query:{name: player.name},
-										post:{name:player.modifiableName}
-									})
-								}).then((response) =>{
-									if(response.status == 200) {
-										this.setState((prevState)=>{
-											var index = prevState.players.indexOf(player);
-											prevState.players[index].name = player.modifiableName;
-											prevState.players[index].isEditting = false;
-											prevState.players[index].url = "/"+worldName+"/"+player.modifiableName;
-											return ({players:prevState.players});
-										});
-									}
-								});
-							} else {
-								this.setState((prevState)=>{
-									prevState.players[index].isEditting = false;
-									return ({players:prevState.players});
-								});
-							}
-							
-						}
-					});
-
-
-				}
-
-				handleEditionChange(e) {
-					e.preventDefault();
-					var playerName = e.currentTarget.dataset.id;
-					var newName = e.target.value;
+				handleRaceChange(e) {
+					var newRaceId = e.target.value;
 					this.setState((prevState)=>{
-						prevState.players.forEach((player,index,players)=>{
-							if(player.name === playerName) {
-								players[index].modifiableName = newName;
+						races.forEach((race,index,array)=>{
+							if(newRaceId === race["_id"]) {
+								prevState.form.pRace = race;		
 							}
 						});
+						
+						return ({form:prevState.form});
+					});
+				}
 
-						return ({players:prevState.players});
+				handleClassChange(e) {
+					var newClassId = e.target.value;
+					this.setState((prevState)=>{
+						classes.forEach((aClass,index,array)=>{
+							if(newClassId === aClass["_id"]) {
+								prevState.form.pClass = aClass;		
+							}
+						});
+						
+						return ({form:prevState.form});
 					});
 				}
 
@@ -208,9 +197,19 @@
 					return (
 						<div>
 							<h1>{worldName}</h1>
-							<PlayerList onClickDelete={this.handleDelete} onClickEdit={this.handleEdit} onEditChange={this.handleEditionChange} onConfirmEdition={this.handleConfirmEdition} players={this.state.players} />
+							<PlayerList onClickDelete={this.handleDelete}  players={this.state.players} />
 							<form onSubmit={this.handleCreate}>
 								<input onChange={this.handleChange} value={this.state.form.name} />
+								<select value={this.state.form.pRace["_id"]}  onChange={this.handleRaceChange}>
+									{races.map((aRace)=>(
+										<option key={aRace["_id"]} value={aRace["_id"]} >{aRace.name}</option>
+									))}
+								</select>
+								<select value={this.state.form.pClass["_id"]}  onChange={this.handleClassChange}>
+									{classes.map((aClass)=>(
+										<option key={aClass["_id"]} value={aClass["_id"]} >{aClass.name}</option>
+									))}
+								</select>
 								<button>Add Player</button>
 							</form>
 						</div>

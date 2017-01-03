@@ -107,13 +107,11 @@ var RouteWorld = function(request,response,data,PageHandler) {
 	queryDocument('worlds',{"name":worldName},(err,worldDocs)=>{
 		if(!err) {
 			if(worldDocs.length) {
-
 				globalDB.collection('classes').find({},{"_id":true,"name": true}).toArray(function(err,classDocs){
 					if(!err) {
 						globalDB.collection('races').find({},{"_id":true,"name": true}).toArray(function(err,raceDocs){
 							if(!err) {
 								PageHandler(200,response,filePath,(page)=>{
-									
 									var pageWorldName = page.replace(/<SERVER_REPLACE_WORLD_NAME>/g,worldName);
 									var pageWithRaces = pageWorldName.replace(/<SERVER_REPLACE_RACES>/g,JSON.stringify(raceDocs));
 									var pageWithClasses = pageWithRaces.replace(/<SERVER_REPLACE_CLASSES>/g,JSON.stringify(classDocs));
