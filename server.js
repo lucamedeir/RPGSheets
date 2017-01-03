@@ -104,7 +104,7 @@ var RouteWorld = function(request,response,data,PageHandler) {
 	var worldName = urlParts[1];
 
 	var filePath = "./world.html";
-	globalDB.collection('worlds').findOne({},{"_id":true,"name": true},function(err,worldDoc){
+	globalDB.collection('worlds').findOne({"name":worldName},{"_id":true,"name": true},function(err,worldDoc){
 		if(!err) {
 			console.log(worldDoc);
 			if(worldDoc) {
@@ -144,26 +144,28 @@ var RoutePlayer = function(request,response,data,PageHandler) {
 		if(!err) {
 			if(worldDocs.length) {
 				var filePath = "./player.html";
-				queryDocument('players',{"name":playerName,"worldName":worldName},(err,playerDocs)=>{
+				globalDB.collection('players').findOne({"name":playerName,"worldName":worldName},(err,playerDoc)=>{
 					if(!err) {
-						if(playerDocs.length){
-							PageHandler(200,response,filePath,(page)=>{
-								return page.replace(/<SERVER_REPLACE_PLAYER>/g,JSON.stringify(playerDocs[0]));
+						if(playerDoc){
+							globalDB.collection('races').findOne({"name":playerDoc.raceName},(err,raceDoc)=>{
+								if(!err) {
+									globalDB.collection('classes').findOne({"name":playerDoc.className},(err,classDoc)=>{
+										if(!err) {
+											PageHandler(200,response,filePath,(page)=>{
+												playerDoc.class = classDoc;
+												playerDoc.race = raceDoc;
+												console.log(playerDoc);
+												return page.replace(/<SERVER_REPLACE_PLAYER>/g,JSON.stringify(playerDoc));
+											});
+										} else PageHandler(500,response);
+									});
+								} else PageHandler(500,response);
 							});
-						} else {
-							PageHandler(404,response);
-						}
-					}else{
-						PageHandler(500,response);
-					}
+						} else PageHandler(404,response);
+					}else PageHandler(500,response);
 				});
-			} else {
-				PageHandler(404,response);
-			}
-		} else {
-			PageHandler(500,response);
-		}
-
+			} else PageHandler(404,response);
+		} else PageHandler(500,response);
 	});
 };
 

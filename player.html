@@ -28,40 +28,6 @@
 		<div id="root"></div>
 		<script type="text/babel">
 			const player = <SERVER_REPLACE_PLAYER>;
-			const playerClass = {
-				name:"warlock",
-				savThrows:{cha:true,wis:true},
-				nAllowedSkills:3,
-				allowedSkills:{
-					arca:true,
-					dece:true,
-					hist:true,
-					inti:true,
-					inve:true,
-					natu:true,
-					reli:true
-				}
-			};
-
-			const playerRace =  {
-				name:"half-orc",
-				speed:30,
-				abilityScoreIncrease:{
-					str:2,
-					dex:0,
-					con:1,
-					int:0,
-					wis:0,
-					cha:0
-				},
-				languages:{
-					common:true,
-					orc:true
-				}
-			};
-
-			player.class = playerClass;
-			player.race = playerRace;
 
 			const statsDefinition = [
 				{name:"Strength",id:"str"},
