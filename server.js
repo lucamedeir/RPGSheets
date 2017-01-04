@@ -104,31 +104,66 @@ var RouteWorld = function(request,response,data,PageHandler) {
 	var worldName = urlParts[1];
 
 	var filePath = "./world.html";
+
+	var world;
+	var classes;
+	var races;
+
+	var erro = false;
+	var proceed = true;
+	var serverAccess = 0;
+	const nOfServerAccess = 3;
+	var sendResponse = false;
+
 	globalDB.collection('worlds').findOne({"name":worldName},{"_id":true,"name": true},function(err,worldDoc){
 		if(!err) {
-			console.log(worldDoc);
 			if(worldDoc) {
-				globalDB.collection('classes').find({},{"_id":true,"name": true}).toArray(function(err,classDocs){
-					if(!err) {
-						globalDB.collection('races').find({},{"_id":true,"name": true}).toArray(function(err,raceDocs){
-							if(!err) {
-								PageHandler(200,response,filePath,(page)=>{
-									var pageWorld = page.replace(/<SERVER_REPLACE_WORLD>/g,JSON.stringify(worldDoc));
-									var pageWithRaces = pageWorld.replace(/<SERVER_REPLACE_RACES>/g,JSON.stringify(raceDocs));
-									var pageWithClasses = pageWithRaces.replace(/<SERVER_REPLACE_CLASSES>/g,JSON.stringify(classDocs));
-									return pageWithClasses;
-								});
-							}
-						});
-					}
-				});
-			} else {
-				PageHandler(404,response);
+				world = worldDoc;
+				serverAccess++;
+				if(serverAccess == nOfServerAccess) {
+					sendResponse = true;
+				}
+			} else proceed = false;
+		} else erro = true;
+	});
+
+	globalDB.collection('races').find({}).toArray((err,raceDocs)=>{
+		if(!err) {
+			races = raceDocs;
+			serverAccess++;
+			if(serverAccess == nOfServerAccess) {
+				sendResponse = true;
 			}
-		} else {
+		} else erro = true;
+	});
+
+	globalDB.collection('classes').find({}).toArray((err,classDocs)=>{
+		if(!err) {
+			classes = classDocs;
+			serverAccess++;
+			if(serverAccess == nOfServerAccess) {
+				sendResponse = true;
+			}
+		} else erro = true;
+	});
+
+	var timerHandle = setInterval(()=>{
+		if(erro) {
 			PageHandler(500,response);
+			clearInterval(timerHandle);
+		} else if(!proceed) {
+			PageHandler(404,response);
+			clearInterval(timerHandle);
+		} else if (sendResponse) {
+			PageHandler(200,response,filePath,(page)=>{
+				var pageWorld = page.replace(/<SERVER_REPLACE_WORLD>/g,JSON.stringify(world));
+				var pageWithRaces = pageWorld.replace(/<SERVER_REPLACE_RACES>/g,JSON.stringify(races));
+				var pageWithClasses = pageWithRaces.replace(/<SERVER_REPLACE_CLASSES>/g,JSON.stringify(classes));
+				return pageWithClasses;
+			});
+			clearInterval(timerHandle);
 		}
-	})
+	},10);
 
 };
 
