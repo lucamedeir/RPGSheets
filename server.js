@@ -87,12 +87,10 @@ var RoutePublic = function(request, response, data, PageHandler) {
 var RouteIndex = function(request,response,data,PageHandler) {
 	response.setHeader('Content-Type', 'text/html');
 	var filePath = "./index.html";
-	queryDocument("worlds",{} ,(err, docs)=>{
-		if(!err){
-			PageHandler(200,response,filePath);	
-		} else {
-			PageHandler(404,response);
-		}
+	globalDB.collection("worlds").find({}).toArray((err,worldDocs)=>{
+		if(!err) {
+			PageHandler(200,response,filePath);
+		} else PageHandler(404,response);
 	});
 };
 
