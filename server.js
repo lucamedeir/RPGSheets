@@ -24,46 +24,6 @@ var router = require('./router.js');
 
 var globalDB;
 
-var insertDocument = function(collection,data, callback) {
-	globalDB.collection(collection).insertOne( data, function(err, results) {
-		callback(err,results);
-	});
-};
-
-var queryDocument = function(collection, query, callback) {
-	globalDB.collection(collection).find(query).toArray(function(err,docs){
-		callback(err, docs);
-	});
-};
-
-var removeDocument = function(collection, query, callback) {
-	globalDB.collection(collection).deleteOne(query, function(err, results) {
-		callback(err,results);
-	});
-};
-
-var updateDocument = function(collection, query, data, callback) {
-	globalDB.collection(collection).updateOne(query,
-		{
-			$set: data,
-			$currentDate: { "lastModified": true }
-		}, function(err, results) {
-		callback(err,results);
-	});
-};
-
-var updateDocuments = function(collection, query, data, callback) {
-   globalDB.collection(collection).updateMany(query,
-      {
-        $set: data,
-        $currentDate: { "lastModified": true }
-      }
-      ,
-      function(err, results) {
-        callback(err,results);
-   });
-};
-
 var RoutePublic = function(request, response, data, PageHandler) {
 	var requestUrl = url.parse(request.url,true);
 	var pathname = requestUrl.pathname;
@@ -352,35 +312,28 @@ var RouteApiPlayer = function(request, response, data, PageHandler) {
 	};
 };
 
-var RouteApiFeature = function(request, response, data, PageHandler) {
-	collectionName = "features";
+var RouteApiRace = function(request, response, data, PageHandler) {
+	collectionName = "races";
 	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
 	switch(request.method) {
 		case 'GET':
-			queryDocument(collectionName,requestUrl.query ,(err,getDocs)=>{
-														response.statusCode = 200;
-														response.end(JSON.stringify(getDocs));
-													});
+			globalDB.collection(collectionName).find(requestUrl.query).toArray((err,getDocs)=>{
+				response.statusCode = 200;
+				response.end(JSON.stringify(getDocs));
+			});
 		break;
 		case 'POST':
-			insertDocument(collectionName,data.post,(err,postResults)=>{
-													response.statusCode = 201;
-													response.end(JSON.stringify(postResults));
-												});
+			globalDB.collection(collectionName).insertOne(data.post,(err,postResults)=>{
+				response.statusCode = 201;
+				response.end(JSON.stringify(postResults));
+			});
 		break;
 		case 'DELETE':
-			console.log(data);
-			removeDocument(collectionName,data.query, (err,deleteResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(deleteResults));
-														});
-		break;
-		case 'PATCH':
-			updateDocument(collectionName,data.query,data.post,(err,updateResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(updateResults));
-														});
+			globalDB.collection(collectionName).deleteOne(data.query, function(err, deleteResults) {
+				response.statusCode = 200;
+				response.end(JSON.stringify(deleteResults));
+			});
 		break;
 	};
 };
@@ -391,62 +344,48 @@ var RouteApiClass = function(request, response, data, PageHandler) {
 	var requestUrl = url.parse(request.url,true);
 	switch(request.method) {
 		case 'GET':
-			queryDocument(collectionName,requestUrl.query ,(err,getDocs)=>{
-														response.statusCode = 200;
-														response.end(JSON.stringify(getDocs));
-													});
+			globalDB.collection(collectionName).find(requestUrl.query).toArray((err,getDocs)=>{
+				response.statusCode = 200;
+				response.end(JSON.stringify(getDocs));
+			});
 		break;
 		case 'POST':
-			insertDocument(collectionName,data.post,(err,postResults)=>{
-													response.statusCode = 201;
-													response.end(JSON.stringify(postResults));
-												});
+			globalDB.collection(collectionName).insertOne(data.post,(err,postResults)=>{
+				response.statusCode = 201;
+				response.end(JSON.stringify(postResults));
+			});
 		break;
 		case 'DELETE':
-			console.log(data);
-			removeDocument(collectionName,data.query, (err,deleteResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(deleteResults));
-														});
-		break;
-		case 'PATCH':
-			updateDocument(collectionName,data.query,data.post,(err,updateResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(updateResults));
-														});
+			globalDB.collection(collectionName).deleteOne(data.query, function(err, deleteResults) {
+				response.statusCode = 200;
+				response.end(JSON.stringify(deleteResults));
+			});
 		break;
 	};
 };
 
-var RouteApiRace = function(request, response, data, PageHandler) {
-	collectionName = "races";
+var RouteApiFeature = function(request, response, data, PageHandler) {
+	collectionName = "features";
 	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
 	switch(request.method) {
 		case 'GET':
-			queryDocument(collectionName,requestUrl.query ,(err,getDocs)=>{
-														response.statusCode = 200;
-														response.end(JSON.stringify(getDocs));
-													});
+			globalDB.collection(collectionName).find(requestUrl.query).toArray((err,getDocs)=>{
+				response.statusCode = 200;
+				response.end(JSON.stringify(getDocs));
+			});
 		break;
 		case 'POST':
-			insertDocument(collectionName,data.post,(err,postResults)=>{
-													response.statusCode = 201;
-													response.end(JSON.stringify(postResults));
-												});
+			globalDB.collection(collectionName).insertOne(data.post,(err,postResults)=>{
+				response.statusCode = 201;
+				response.end(JSON.stringify(postResults));
+			});
 		break;
 		case 'DELETE':
-			console.log(data);
-			removeDocument(collectionName,data.query, (err,deleteResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(deleteResults));
-														});
-		break;
-		case 'PATCH':
-			updateDocument(collectionName,data.query,data.post,(err,updateResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(updateResults));
-														});
+			globalDB.collection(collectionName).deleteOne(data.query, function(err, deleteResults) {
+				response.statusCode = 200;
+				response.end(JSON.stringify(deleteResults));
+			});
 		break;
 	};
 };

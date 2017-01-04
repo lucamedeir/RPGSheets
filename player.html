@@ -184,7 +184,7 @@
 								<li key={stat.id}>
 									<h5>{stat.name}</h5>
 									+ {calculateBonus(limitStat(parseFloat(props.playerStats[stat.id])+parseFloat(props.playerRace.abilityScoreIncrease[stat.id])))}<br/>
-									<input maxlength="2" size="2" data-id={stat.id}  onChange={props.onChange} value={props.playerStats[stat.id]} /> => {limitStat(parseFloat(props.playerStats[stat.id])+parseFloat(props.playerRace.abilityScoreIncrease[stat.id]))}
+									<input maxLength="2" size="2" data-id={stat.id}  onChange={props.onChange} value={props.playerStats[stat.id]} /> => {limitStat(parseFloat(props.playerStats[stat.id])+parseFloat(props.playerRace.abilityScoreIncrease[stat.id]))}
 								</li>
 							))}
 						</ul>
