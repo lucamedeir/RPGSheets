@@ -269,40 +269,48 @@ var RoutePlayer = function(request,response,data,PageHandler) {
 };
 
 var RouteApiWorld = function(request, response, data, PageHandler) {
-	collection = "worlds";
+	collectionName = "worlds";
 	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
 	switch(request.method) {
 		case 'GET':
-			queryDocument(collection,requestUrl.query ,(err,getDocs)=>{
-														response.statusCode = 200;
-														response.end(JSON.stringify(getDocs));
-													});
+			globalDB.collection(collectionName).find(requestUrl.query).toArray((err,getDocs)=>{
+				response.statusCode = 200;
+				response.end(JSON.stringify(getDocs));
+			});
 		break;
 		case 'POST':
-			insertDocument(collection,data.post,(err,postResults)=>{
-													response.statusCode = 201;
-													response.end(JSON.stringify(postResults));
-												});
+			globalDB.collection(collectionName).insertOne(data.post,(err,postResults)=>{
+				response.statusCode = 201;
+				response.end(JSON.stringify(postResults));
+			});
 		break;
 		case 'DELETE':
-			console.log(data);
-			removeDocument(collection,data.query, (err,deleteResults) =>{
+			globalDB.collection(collectionName).deleteOne(data.query, function(err, deleteResults) {
 				response.statusCode = 200;
 				response.end(JSON.stringify(deleteResults));
 			});
 		break;
 		case 'PATCH':
-			updateDocument(collection,data.query,data.post,(err,worldUpdateResults) =>{
-				updateDocuments("players",{"worldName":data.query.name},{"worldName":data.post.name},(err,playerUpdateResults) =>{
-					response.statusCode = 200;
-					var updateResults = [];
-					updateResults.push(worldUpdateResults);
-					updateResults.push(playerUpdateResults);
-					response.end(JSON.stringify(updateResults));
-				});
+			globalDB.collection(collectionName).updateOne(data.query,
+				{
+					$set: data.post,
+					$currentDate: { "lastModified": true }
+				}, 
+				(err,worldUpdateResults) =>{
+					globalDB.collection("players").updateMany({"worldName":data.query.name},
+						{
+							$set: {"worldName":data.post.name},
+							$currentDate: { "lastModified": true }
+						}, 
+						(err,playerUpdateResults) =>{
+							response.statusCode = 200;
+							var updateResults = [];
+							updateResults.push(worldUpdateResults);
+							updateResults.push(playerUpdateResults);
+							response.end(JSON.stringify(updateResults));
+					});
 			});
-			
 		break;
 	};
 };

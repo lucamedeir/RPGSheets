@@ -170,6 +170,9 @@
 											return ({worlds:prevState.worlds});
 										});
 									}
+									return response.json();
+								}).then((json)=>{
+									console.log(json);
 								});
 							} else {
 								this.setState((prevState)=>{
