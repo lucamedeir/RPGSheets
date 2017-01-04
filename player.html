@@ -16,6 +16,7 @@
 			}
 			#first {
 			    float:left; /* add this */
+			    padding-right: 1cm;
 			}
 			#second {
 			    overflow: left; /* if you don't want #second to wrap below #first */
@@ -170,15 +171,20 @@
 				return Math.floor((value-10)/2);
 			}
 
+			function limitStat (stat) {
+				if (stat > 20) return 20; 
+				else return stat;
+			}
+
 			function StatsList(props) {
 				return (
 					<div>
 						<ul>
 							{props.statsDefinition.map((stat)=>(
 								<li key={stat.id}>
-									<h4>{stat.name}</h4>
-									+ {calculateBonus(parseFloat(props.playerStats[stat.id])+parseFloat(props.playerRace.abilityScoreIncrease[stat.id]))}<br/>
-									<input data-id={stat.id}  onChange={props.onChange} value={props.playerStats[stat.id]} />{parseFloat(props.playerStats[stat.id])+parseFloat(props.playerRace.abilityScoreIncrease[stat.id])}
+									<h5>{stat.name}</h5>
+									+ {calculateBonus(limitStat(parseFloat(props.playerStats[stat.id])+parseFloat(props.playerRace.abilityScoreIncrease[stat.id])))}<br/>
+									<input maxlength="2" size="2" data-id={stat.id}  onChange={props.onChange} value={props.playerStats[stat.id]} /> => {limitStat(parseFloat(props.playerStats[stat.id])+parseFloat(props.playerRace.abilityScoreIncrease[stat.id]))}
 								</li>
 							))}
 						</ul>
@@ -191,18 +197,16 @@
 					super(props);
 
 					this.state = {
-						statusListName:props.statusListName,
 						timeStamp : new Date().toLocaleTimeString()
 					};
 				}
 
 				calculateStatusBonus(id) {
-					var bonus;
+					var bonus = calculateBonus(limitStat(parseFloat(this.props.player.stats[id])+parseFloat(this.props.player.race.abilityScoreIncrease[id])));
 					if(this.props.player.class.savThrows[id]) {
-						bonus = calculateBonus(parseFloat(this.props.player.stats[id])+parseFloat(this.props.player.race.abilityScoreIncrease[id]))+parseFloat(this.props.player.prf);
-					} else {
-						bonus = calculateBonus(parseFloat(this.props.player.stats[id])+parseFloat(this.props.player.race.abilityScoreIncrease[id]));
-					}
+						bonus += parseFloat(this.props.player.prf);
+					} 
+
 					return bonus;
 				}
 
@@ -219,26 +223,48 @@
 				}
 			}
 
+			class SkillsList extends React.Component {
+				constructor(props) {
+					super(props);
+
+					this.state = {
+						timeStamp : new Date().toLocaleTimeString()
+					};
+				}
+
+				calculateStatusBonus(skill) {
+					var bonus = calculateBonus(limitStat(parseFloat(this.props.player.stats[skill.stat])+parseFloat(this.props.player.race.abilityScoreIncrease[skill.stat])));
+					if(this.props.player.skills.types[skill.id]) {
+						bonus += parseFloat(this.props.player.prf);
+					}
+					return bonus;
+				}
+
+				render() {
+					return (
+						<div>
+							<ul>
+								{this.props.skillsListName.map((skill)=>(
+									<li key={skill.id+this.state.timeStamp}>
+										<input data-id={skill.id} data-stat={skill.stat} onChange={this.props.onCheck} type="checkbox" checked={this.props.player.skills.types[skill.id]?true:false} value={skill.id} /> + {this.calculateStatusBonus(skill)}
+										 {
+										this.props.player.class.allowedSkills[skill.id]?
+										<b>{skill.name + "(" + skill.stat+ ")"}</b>
+										:
+										skill.name + "(" + skill.stat+ ")"
+										}
+										
+									</li>
+								))}
+							</ul>
+							<b>{this.props.player.class.nAllowedSkills - this.props.player.skills.n} skills left to choose</b>
+						</div>
+					);
+				}
+			}
+
 			function SkillsList(props) {
-				return (
-					<div>
-						<ul>
-							{props.skillsDefinition.map((skill)=>(
-								<li key={skill.id}>
-									<input data-id={skill.id} data-stat={skill.stat} onChange={props.onCheck} type="checkbox" checked={props.playerSkills.types[skill.id]} value={skill.id} /> + {props.playerSkills.types[skill.id]?calculateBonus(parseFloat(props.playerStats[skill.stat])+parseFloat(props.playerRace.abilityScoreIncrease[skill.stat]))+props.prf:calculateBonus(parseFloat(props.playerStats[skill.stat])+parseFloat(props.playerRace.abilityScoreIncrease[skill.stat]))}
-									 {
-									props.playerClass.allowedSkills[skill.id]?
-									<b>{skill.name}</b>
-									:
-									skill.name
-									}
-									
-								</li>
-							))}
-						</ul>
-						<b>{props.playerClass.nAllowedSkills - props.playerSkills.n} skills left to choose</b>
-					</div>
-				);
+
 			}
 
 			class Main extends React.Component {
@@ -248,6 +274,7 @@
 					var thePlayer = props.player;
 					thePlayer.prf = 2;
 					thePlayer.lvl = 1;
+					thePlayer.modifiableName = props.player.name;
 					this.state = {"player":thePlayer};
 					this.handleExpChange = this.handleExpChange.bind(this);
 					this.handleNameChange = this.handleNameChange.bind(this);
@@ -255,6 +282,7 @@
 					this.handleSkillCheck = this.handleSkillCheck.bind(this);
 					this.handleRaceChange = this.handleRaceChange.bind(this);
 					this.handleClassChange = this.handleClassChange.bind(this);
+					this.handleSubmit = this.handleSubmit.bind(this);
 				}
 
 
@@ -321,7 +349,7 @@
 					var newName = e.target.value;
 
 					this.setState((prevState)=>{
-						prevState.player.name = newName;
+						prevState.player.modifiableName = newName;
 						
 						return ({player:prevState.player});
 					});
@@ -359,12 +387,48 @@
 					});
 				}
 
+				handleSubmit(e) {
+					e.preventDefault();
+					if(this.state.player.modifiableName) {
+						fetch('/api/player', {
+							method: 'PATCH',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify({
+								query:{
+									name:this.state.player.name,
+									worldName:this.state.player.worldName
+								},
+								post:{
+									name: this.state.player.modifiableName,
+									exp:this.state.player.exp,
+									raceName: this.state.player.raceName,
+									className: this.state.player.className,
+									raceId: this.state.player.raceId,
+									classId: this.state.player.raceId,
+									stats:this.state.player.stats,
+									skills:this.state.player.skills
+								}
+							})
+						}).then((response) =>{
+							return response.json();
+						}).then((json)=>{
+							this.setState((prevState)=>{
+								prevState.player.name = prevState.player.modifiableName;
+								return ({player:prevState.player});
+							});
+							console.log(json);
+						});
+					}
+				}
+
 				render() {
 					return (
-						<div>
+						<form onSubmit={this.handleSubmit} >
 							<div id="wrapper">
 								<div id="first">
-									<input data-id="name" onChange={this.handleNameChange} value={this.state.player.name}/> 
+									<input data-id="name" onChange={this.handleNameChange} value={this.state.player.modifiableName}/> 
 								</div>
 								<div id="second">
 									<select value={this.state.player.classId}  onChange={this.handleClassChange}>
@@ -388,12 +452,12 @@
 								</div>
 								<div id="second">
 									<SavingThrowsList statusListName={statsDefinition} player={this.state.player} />
-									<SkillsList skillsDefinition={skillsDefinition} onCheck={this.handleSkillCheck} playerClass={this.state.player.class} playerRace={this.state.player.race} playerStats={this.state.player.stats} playerSkills={this.state.player.skills} prf={this.state.player.prf} />
+									<SkillsList skillsListName={skillsDefinition} onCheck={this.handleSkillCheck} player={this.state.player}/>
 								</div>
-								
 							</div>
-							
-						</div>
+
+							<button>Update</button>
+						</form>
 					);
 				}
 			}

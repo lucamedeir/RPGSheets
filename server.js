@@ -260,9 +260,12 @@ var RouteApiWorld = function(request, response, data, PageHandler) {
 			});
 		break;
 		case 'PATCH':
-			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
-				updateDocuments("players",{"world":data.query.name},{"world":data.post.name},(err,updateResults) =>{
+			updateDocument(collection,data.query,data.post,(err,worldUpdateResults) =>{
+				updateDocuments("players",{"worldName":data.query.name},{"worldName":data.post.name},(err,playerUpdateResults) =>{
 					response.statusCode = 200;
+					var updateResults = [];
+					updateResults.push(worldUpdateResults);
+					updateResults.push(playerUpdateResults);
 					response.end(JSON.stringify(updateResults));
 				});
 			});
