@@ -121,7 +121,7 @@ var RouteWorld = function(request,response,data,PageHandler) {
 			});
 			clearInterval(timerHandle);
 		}
-	},10);
+	},2);
 
 };
 
@@ -225,7 +225,7 @@ var RoutePlayer = function(request,response,data,PageHandler) {
 			});
 			clearInterval(timerHandle);
 		}
-	},10);
+	},2);
 };
 
 var RouteApiWorld = function(request, response, data, PageHandler) {
