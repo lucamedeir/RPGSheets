@@ -316,64 +316,68 @@ var RouteApiWorld = function(request, response, data, PageHandler) {
 };
 
 var RouteApiPlayer = function(request, response, data, PageHandler) {
-	collection = "players";
+	collectionName = "players";
 	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
 	switch(request.method) {
 		case 'GET':
-			queryDocument(collection,requestUrl.query ,(err,getDocs)=>{
-														response.statusCode = 200;
-														response.end(JSON.stringify(getDocs));
-													});
+			globalDB.collection(collectionName).find(requestUrl.query).toArray((err,getDocs)=>{
+				response.statusCode = 200;
+				response.end(JSON.stringify(getDocs));
+			});
 		break;
 		case 'POST':
-			insertDocument(collection,data.post,(err,postResults)=>{
-													response.statusCode = 201;
-													response.end(JSON.stringify(postResults));
-												});
+			globalDB.collection(collectionName).insertOne(data.post,(err,postResults)=>{
+				response.statusCode = 201;
+				response.end(JSON.stringify(postResults));
+			});
 		break;
 		case 'DELETE':
-			console.log(data);
-			removeDocument(collection,data.query, (err,deleteResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(deleteResults));
-														});
+			globalDB.collection(collectionName).deleteOne(data.query, function(err, deleteResults) {
+				response.statusCode = 200;
+				response.end(JSON.stringify(deleteResults));
+			});
 		break;
 		case 'PATCH':
-			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
-															response.statusCode = 200;
-															response.end(JSON.stringify(updateResults));
-														});
+			globalDB.collection(collectionName).updateOne(data.query,
+				{
+					$set: data.post,
+					$currentDate: { "lastModified": true }
+				}, 
+				(err,updateResults) =>{
+					response.statusCode = 200;
+					response.end(JSON.stringify(updateResults));
+			});
 		break;
 	};
 };
 
 var RouteApiFeature = function(request, response, data, PageHandler) {
-	collection = "features";
+	collectionName = "features";
 	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
 	switch(request.method) {
 		case 'GET':
-			queryDocument(collection,requestUrl.query ,(err,getDocs)=>{
+			queryDocument(collectionName,requestUrl.query ,(err,getDocs)=>{
 														response.statusCode = 200;
 														response.end(JSON.stringify(getDocs));
 													});
 		break;
 		case 'POST':
-			insertDocument(collection,data.post,(err,postResults)=>{
+			insertDocument(collectionName,data.post,(err,postResults)=>{
 													response.statusCode = 201;
 													response.end(JSON.stringify(postResults));
 												});
 		break;
 		case 'DELETE':
 			console.log(data);
-			removeDocument(collection,data.query, (err,deleteResults) =>{
+			removeDocument(collectionName,data.query, (err,deleteResults) =>{
 															response.statusCode = 200;
 															response.end(JSON.stringify(deleteResults));
 														});
 		break;
 		case 'PATCH':
-			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
+			updateDocument(collectionName,data.query,data.post,(err,updateResults) =>{
 															response.statusCode = 200;
 															response.end(JSON.stringify(updateResults));
 														});
@@ -382,31 +386,31 @@ var RouteApiFeature = function(request, response, data, PageHandler) {
 };
 
 var RouteApiClass = function(request, response, data, PageHandler) {
-	collection = "classes";
+	collectionName = "classes";
 	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
 	switch(request.method) {
 		case 'GET':
-			queryDocument(collection,requestUrl.query ,(err,getDocs)=>{
+			queryDocument(collectionName,requestUrl.query ,(err,getDocs)=>{
 														response.statusCode = 200;
 														response.end(JSON.stringify(getDocs));
 													});
 		break;
 		case 'POST':
-			insertDocument(collection,data.post,(err,postResults)=>{
+			insertDocument(collectionName,data.post,(err,postResults)=>{
 													response.statusCode = 201;
 													response.end(JSON.stringify(postResults));
 												});
 		break;
 		case 'DELETE':
 			console.log(data);
-			removeDocument(collection,data.query, (err,deleteResults) =>{
+			removeDocument(collectionName,data.query, (err,deleteResults) =>{
 															response.statusCode = 200;
 															response.end(JSON.stringify(deleteResults));
 														});
 		break;
 		case 'PATCH':
-			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
+			updateDocument(collectionName,data.query,data.post,(err,updateResults) =>{
 															response.statusCode = 200;
 															response.end(JSON.stringify(updateResults));
 														});
@@ -415,31 +419,31 @@ var RouteApiClass = function(request, response, data, PageHandler) {
 };
 
 var RouteApiRace = function(request, response, data, PageHandler) {
-	collection = "races";
+	collectionName = "races";
 	response.setHeader('Content-Type', 'application/json');
 	var requestUrl = url.parse(request.url,true);
 	switch(request.method) {
 		case 'GET':
-			queryDocument(collection,requestUrl.query ,(err,getDocs)=>{
+			queryDocument(collectionName,requestUrl.query ,(err,getDocs)=>{
 														response.statusCode = 200;
 														response.end(JSON.stringify(getDocs));
 													});
 		break;
 		case 'POST':
-			insertDocument(collection,data.post,(err,postResults)=>{
+			insertDocument(collectionName,data.post,(err,postResults)=>{
 													response.statusCode = 201;
 													response.end(JSON.stringify(postResults));
 												});
 		break;
 		case 'DELETE':
 			console.log(data);
-			removeDocument(collection,data.query, (err,deleteResults) =>{
+			removeDocument(collectionName,data.query, (err,deleteResults) =>{
 															response.statusCode = 200;
 															response.end(JSON.stringify(deleteResults));
 														});
 		break;
 		case 'PATCH':
-			updateDocument(collection,data.query,data.post,(err,updateResults) =>{
+			updateDocument(collectionName,data.query,data.post,(err,updateResults) =>{
 															response.statusCode = 200;
 															response.end(JSON.stringify(updateResults));
 														});
