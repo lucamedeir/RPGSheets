@@ -89,6 +89,7 @@
 					this.handleTitleChange = this.handleTitleChange.bind(this);
 					this.handleClassChange = this.handleClassChange.bind(this);
 					this.handleDelete = this.handleDelete.bind(this);
+					this.handleTextChange = this.handleTextChange.bind(this);
 					this.handleSearch = this.handleSearch.bind(this);
 				}
 
@@ -188,6 +189,14 @@
 					});
 				}
 
+				handleTextChange(e) {
+					var text = e.target.value;
+					this.setState((prevState)=>{
+						prevState.form.text = text;
+						return ({form:prevState.form});
+					});
+				}
+
 				render() {
 					return (
 						<div id="wrapper">
@@ -199,6 +208,7 @@
 											<option key={aClass["_id"]} value={aClass["_id"]} >{aClass.name}</option>
 										))}
 									</select><br/>
+									<textarea value={this.state.form.text} onChange={this.handleTextChange} /><br/>
 									<button>Submit</button>
 								</form>
 							</aside>
