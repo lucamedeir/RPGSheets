@@ -27,46 +27,19 @@
 	<body>
 		<div id="root"></div>
 		<script type="text/babel">
-			const statsDefinition = [
-				{name:"Strength",id:"str"},
-				{name:"Dexterity",id:"dex"},
-				{name:"Constitution",id:"con"},
-				{name:"Intelligence",id:"int"},
-				{name:"Wisdom",id:"wis"},
-				{name:"Charisma",id:"cha"}
-			];
 
-			function InputList(props) {
-				return (
-					<ul>
-						{props.input.map((item)=>(
-							<li key={item.id}>
-								<input data-id={item.id} onChange={props.onChange} value={props.itemValue[item.id]} />{item.name}
-							</li>
-						))}
-					</ul>
-				);
-			}
-
-			function RacesList(props) {
+			function FeaturesList(props) {
 				return (
 					<div>
-						<h1>Races</h1>
+						<h1>Features</h1>
 						Search: <input onChange={props.onSearch} value={props.search.text}/>
 						<ul>
-							{props.races.map((race)=>(
-								<li key={race["_id"]} id="wrapper">
-									{props.search.regex.test(race.name)?
+							{props.features.map((feature)=>(
+								<li key={feature["_id"]} id="wrapper">
+									{props.search.regex.test(feature.name) && feature.classId === props.theClass["_id"]?
 									<div>
-										<h3>{race.name} has {race.speed} feet for speed</h3>
-								 		<ul>
-								 			{props.abilities.map((ability)=>(
-								 				<li key={ability.id}>
-								 					+{race.abilityScoreIncrease[ability.id]} {ability.name}
-								 				</li>
-								 			))}
-								 		</ul>
-										<a href="" onClick={props.onDelete} data-id={race._id}  data-name={race.name}><img alt={"delete_"+race.name} src="/public/images/delete.png" width="15" height="15"/></a>								
+										<h3>{feature.name}</h3>
+										<a href="" onClick={props.onDelete} data-id={feature._id}  data-name={feature.name}><img alt={"delete_"+feature.name} src="/public/images/delete.png" width="15" height="15"/></a>								
 									</div>
 									:
 									""
@@ -85,38 +58,38 @@
 
 					this.state = {
 						form : {
-							name:"",
-							abilityScoreIncrease:{
-								str:0,
-								dex:0,
-								con:0,
-								int:0,
-								wis:0,
-								cha:0
-							},
-							speed:0
+							title:"",
+							description:"",
+							class:{},
+							startingLevel:1,
+							spell:false
 						},
 						search: {
 							regex:/([A-z])\w+|([A-z])/,
 							text:""
 						},
-						races:[]
+						features:[],
+						classes:[]
 					};
 
+					fetch('/api/feature').then((responseFeature)=>{
+						return responseFeature.json();
+					}).then((jsonFeature)=>{
+						fetch('/api/class').then((responseClass)=>{
+							return responseClass.json();
+						}).then((jsonClass)=>{
+							this.setState((prevState)=>{
+								prevState.form.class = jsonClass[0];
+								return ({form:prevState.form,features:jsonFeature,classes:jsonClass});
+							});
+						});
+					});
+
 					this.handleSubmit = this.handleSubmit.bind(this);
-					this.handleAbilityScoreChange = this.handleAbilityScoreChange.bind(this);
-					this.handleSpeedChange = this.handleSpeedChange.bind(this);
-					this.handleNameChange = this.handleNameChange.bind(this);
+					this.handleTitleChange = this.handleTitleChange.bind(this);
+					this.handleClassChange = this.handleClassChange.bind(this);
 					this.handleDelete = this.handleDelete.bind(this);
 					this.handleSearch = this.handleSearch.bind(this);
-				}
-
-				componentDidMount() {
-					fetch('/api/race').then((response)=>{
-						return response.json();
-					}).then((json)=>{
-						this.setState({races:json});
-					});
 				}
 
 				handleSubmit(e) {
@@ -124,7 +97,7 @@
 					var data = this.state.form;
 
 					if(this.state.form.name && this.state.form.speed ) {
-						fetch('/api/race', {
+						fetch('/api/feature', {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json'
@@ -134,7 +107,7 @@
 							if(response.status == 201) {
 								data["_id"] = new Date().toLocaleTimeString();
 								this.setState((prevState)=>({
-									races: prevState.races.concat(data),
+									features: prevState.features.concat(data),
 									form : {
 										name:"",
 										abilityScoreIncrease:{
@@ -153,55 +126,38 @@
 					}
 				}
 
-				handleAbilityScoreChange(e) {
-					var abilityScoreId = e.target.dataset.id;
-					var value = e.target.value;
+				handleTitleChange(e){
+					var title = e.target.value;
 					this.setState((prevState)=>{
-						prevState.form.abilityScoreIncrease[abilityScoreId] = parseFloat(value);
-						return ({form:prevState.form});
-					});
-				}
-
-				handleSpeedChange(e) {
-					var value = e.target.value;
-					this.setState((prevState)=>{
-						prevState.form.speed = parseFloat(value);
-						return ({form:prevState.form});
-					});
-				}
-
-				handleNameChange(e){
-					var name = e.target.value;
-					this.setState((prevState)=>{
-						prevState.form.name= name;
+						prevState.form.title= title;
 						return ({form:prevState.form});
 					});
 				}
 
 				handleDelete(e) {
 					e.preventDefault();
-					var raceId = e.currentTarget.dataset.id;
-					var raceName = e.currentTarget.dataset.name;
+					var featureId = e.currentTarget.dataset.id;
+					var featureTitle = e.currentTarget.dataset.title;
 
-					fetch('/api/race', {
+					fetch('/api/feature', {
 						method: 'DELETE',
 						headers: {
 							'Content-Type': 'application/json'
 						},
 						body: JSON.stringify({
-							query:{name: raceName}
+							query:{title: featureTitle}
 						})
 					}).then((response) =>{
 						if(response.status == 200) {
 							this.setState((prevState)=>{
-								var modifiedraces = prevState.races.slice(0);
-								modifiedraces.forEach((race,index,races)=>{
-									if(race["_id"] === raceId){
-										prevState.races.splice(index,1);
+								var modifiedfeatures = prevState.features.slice(0);
+								modifiedfeatures.forEach((feature,index,features)=>{
+									if(feature["_id"] === featureId){
+										prevState.features.splice(index,1);
 									}
 								});
 
-								return ({races:prevState.races})
+								return ({features:prevState.features})
 							});
 						}
 					});
@@ -219,19 +175,35 @@
 					this.setState({search:{text:newSearchText,regex:newSearchTerm}});
 				}
 
+				handleClassChange(e) {
+					var newClassId = e.target.value;
+					this.setState((prevState)=>{
+						this.state.classes.forEach((aClass,index,array)=>{
+							if(newClassId === aClass["_id"]) {
+								prevState.form.class = aClass;
+							}
+						});
+						
+						return ({form:prevState.form});
+					});
+				}
+
 				render() {
 					return (
 						<div id="wrapper">
 							<aside id="first">
 								<form onSubmit={this.handleSubmit}>
-									Name: <input value={this.state.form.name} onChange={this.handleNameChange} /><br/>
-									<InputList itemValue={this.state.form.abilityScoreIncrease} onChange={this.handleAbilityScoreChange} input={statsDefinition}/>
-									Speed: <input onChange={this.handleSpeedChange} value={this.state.form.speed} /><br/>
+									Name: <input value={this.state.form.title} onChange={this.handleTitleChange} /><br/>
+									<select value={this.state.form.class["_id"]}  onChange={this.handleClassChange}>
+										{this.state.classes.map((aClass)=>(
+											<option key={aClass["_id"]} value={aClass["_id"]} >{aClass.name}</option>
+										))}
+									</select><br/>
 									<button>Submit</button>
 								</form>
 							</aside>
 							<article id="second">
-								<RacesList search={this.state.search}  onSearch={this.handleSearch} onDelete={this.handleDelete} races={this.state.races} abilities={statsDefinition}/>
+								<FeaturesList search={this.state.search}  onSearch={this.handleSearch} onDelete={this.handleDelete} features={this.state.features} theClass={this.state.form.class} />
 							</article>
 						</div>
 					);
