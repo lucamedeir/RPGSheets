@@ -33,13 +33,19 @@
 					<div>
 						<h1>Features</h1>
 						Search: <input onChange={props.onSearch} value={props.search.text}/>
+						<select value={props.classId}  onChange={props.onClassSearch}>
+							{props.classes.map((aClass)=>(
+								<option key={aClass["_id"]} value={aClass["_id"]} >{aClass.name}</option>
+							))}
+						</select>
 						<ul>
 							{props.features.map((feature)=>(
 								<li key={feature["_id"]} id="wrapper">
-									{props.search.regex.test(feature.name) && feature.classId === props.theClass["_id"]?
+									{props.search.regex.test(feature.title) && props.classId === feature.classId ?
 									<div>
-										<h3>{feature.name}</h3>
-										<a href="" onClick={props.onDelete} data-id={feature._id}  data-name={feature.name}><img alt={"delete_"+feature.name} src="/public/images/delete.png" width="15" height="15"/></a>								
+										<h3>{feature.title}</h3>
+										{feature.description}<br/>
+										<a href="" onClick={props.onDelete} data-id={feature._id}  data-title={feature.title}><img alt={"delete_"+feature.title} src="/public/images/delete.png" width="15" height="15"/></a>								
 									</div>
 									:
 									""
@@ -60,13 +66,14 @@
 						form : {
 							title:"",
 							description:"",
-							class:{},
+							classId:"",
 							startingLevel:1,
 							spell:false
 						},
 						search: {
 							regex:/([A-z])\w+|([A-z])/,
-							text:""
+							text:"",
+							classId:""
 						},
 						features:[],
 						classes:[]
@@ -79,8 +86,9 @@
 							return responseClass.json();
 						}).then((jsonClass)=>{
 							this.setState((prevState)=>{
-								prevState.form.class = jsonClass[0];
-								return ({form:prevState.form,features:jsonFeature,classes:jsonClass});
+								prevState.form.classId = jsonClass[0]["_id"];
+								prevState.search.classId = jsonClass[0]["_id"];
+								return ({form:prevState.form,features:jsonFeature,classes:jsonClass, search:prevState.search});
 							});
 						});
 					});
@@ -91,13 +99,21 @@
 					this.handleDelete = this.handleDelete.bind(this);
 					this.handleTextChange = this.handleTextChange.bind(this);
 					this.handleSearch = this.handleSearch.bind(this);
+					this.handleSpellCheck = this.handleSpellCheck.bind(this);
+					this.handleSearchClassChange = this.handleSearchClassChange.bind(this);
 				}
 
 				handleSubmit(e) {
 					e.preventDefault();
-					var data = this.state.form;
+					var data = {
+						title:this.state.form.title,
+						description:this.state.form.description,
+						classId:this.state.form.classId,
+						startingLevel:this.state.form.startingLevel,
+						spell:this.state.form.spell
+					};
 
-					if(this.state.form.name && this.state.form.speed ) {
+					if(this.state.form.title && this.state.form.description ) {
 						fetch('/api/feature', {
 							method: 'POST',
 							headers: {
@@ -110,19 +126,17 @@
 								this.setState((prevState)=>({
 									features: prevState.features.concat(data),
 									form : {
-										name:"",
-										abilityScoreIncrease:{
-											str:0,
-											dex:0,
-											con:0,
-											int:0,
-											wis:0,
-											cha:0
-										},
-										speed:0
+										title:"",
+										description:"",
+										classId:prevState.form.classId,
+										startingLevel:1,
+										spell:false
 									}
 								}));
 							}
+							return response.json();
+						}).then((json)=>{
+							console.log(json);
 						});
 					}
 				}
@@ -176,12 +190,25 @@
 					this.setState({search:{text:newSearchText,regex:newSearchTerm}});
 				}
 
+				handleSearchClassChange(e) {
+					var newClassId = e.target.value;
+					this.setState((prevState)=>{
+						this.state.classes.forEach((aClass,index,array)=>{
+							if(newClassId === aClass["_id"]) {
+								prevState.search.classId = newClassId;
+							}
+						});
+						
+						return ({search:prevState.search});
+					});
+				}
+
 				handleClassChange(e) {
 					var newClassId = e.target.value;
 					this.setState((prevState)=>{
 						this.state.classes.forEach((aClass,index,array)=>{
 							if(newClassId === aClass["_id"]) {
-								prevState.form.class = aClass;
+								prevState.form.classId = newClassId;
 							}
 						});
 						
@@ -192,7 +219,15 @@
 				handleTextChange(e) {
 					var text = e.target.value;
 					this.setState((prevState)=>{
-						prevState.form.text = text;
+						prevState.form.description = text;
+						return ({form:prevState.form});
+					});
+				}
+
+				handleSpellCheck(e) {
+					var checked = e.target.checked;
+					this.setState((prevState)=>{
+						prevState.form.spell = checked;
 						return ({form:prevState.form});
 					});
 				}
@@ -203,17 +238,18 @@
 							<aside id="first">
 								<form onSubmit={this.handleSubmit}>
 									Name: <input value={this.state.form.title} onChange={this.handleTitleChange} /><br/>
-									<select value={this.state.form.class["_id"]}  onChange={this.handleClassChange}>
+									<select value={this.state.form.classId}  onChange={this.handleClassChange}>
 										{this.state.classes.map((aClass)=>(
 											<option key={aClass["_id"]} value={aClass["_id"]} >{aClass.name}</option>
 										))}
 									</select><br/>
-									<textarea value={this.state.form.text} onChange={this.handleTextChange} /><br/>
+									<textarea value={this.state.form.description} onChange={this.handleTextChange} /><br/>
+									Spell: <input type="checkbox" checked={this.state.form.spell} onChange={this.handleSpellCheck} /><br/>
 									<button>Submit</button>
 								</form>
 							</aside>
 							<article id="second">
-								<FeaturesList search={this.state.search}  onSearch={this.handleSearch} onDelete={this.handleDelete} features={this.state.features} theClass={this.state.form.class} />
+								<FeaturesList classes={this.state.classes} classId={this.state.search.classId} search={this.state.search}  onSearch={this.handleSearch} onClassSearch={this.handleSearchClassChange} onDelete={this.handleDelete} features={this.state.features} />
 							</article>
 						</div>
 					);
