@@ -187,9 +187,14 @@
 							{props.features.map((feature)=>(
 								<li key={feature["_id"]} id="wrapper">
 									{props.search.regex.test(feature.title) && props.search.classId === feature.classId ?
-									<div>
-										{feature.title}
-									</div>
+										<div data-id={feature["_id"]}  onMouseEnter={props.onMouseEnter} onMouseOut={props.onMouseOut}>
+											<h5>{feature.title}</h5>
+											{props.search.showDescription && props.search.showId === feature["_id"] ?
+												feature.description
+											:
+												""
+											}
+										</div>
 									:
 									""
 									}
@@ -295,13 +300,16 @@
 					thePlayer.prf = 2;
 					thePlayer.lvl = 1;
 					thePlayer.modifiableName = props.player.name;
-					this.state = {"player":thePlayer,
+					this.state = {
+						player:thePlayer,
 						search: {
 							regex:/([A-z])\w+|([A-z])/,
 							text:"",
 							classId:thePlayer.classId,
-							showDescription:false
-						}};
+							showDescription:false,
+							showId:""
+						}
+					};
 					this.handleExpChange = this.handleExpChange.bind(this);
 					this.handleNameChange = this.handleNameChange.bind(this);
 					this.handleStatChange = this.handleStatChange.bind(this);
@@ -310,6 +318,8 @@
 					this.handleClassChange = this.handleClassChange.bind(this);
 					this.handleSubmit = this.handleSubmit.bind(this);
 					this.handleSearch = this.handleSearch.bind(this);
+					this.handleMouseEnter = this.handleMouseEnter.bind(this);
+					this.handleMouseOut = this.handleMouseOut.bind(this);
 				}
 
 
@@ -320,6 +330,26 @@
 						prevState.player.prf = expData.prf;
 						
 						return ({player:prevState.player});
+					});
+				}
+
+				handleMouseOut(e) {
+					var targetId = e.currentTarget.dataset.id;
+
+					this.setState((prevState)=>{
+						prevState.search.showDescription = false;
+						prevState.search.showId = targetId;
+						return ({search:prevState.search});
+					});
+				}
+
+				handleMouseEnter(e) {
+					var targetId = e.currentTarget.dataset.id;
+
+					this.setState((prevState)=>{
+						prevState.search.showDescription = true;
+						prevState.search.showId = targetId;
+						return ({search:prevState.search});
 					});
 				}
 
@@ -337,6 +367,10 @@
 						prevState.search.regex = newSearchTerm;
 						return ({search:prevState.search});
 					});
+				}
+
+				handleOnMouseOver(e) {
+
 				}
 
 				handleExpChange(e) {
@@ -499,7 +533,7 @@
 									<SkillsList skillsListName={skillsDefinition} onCheck={this.handleSkillCheck} player={this.state.player}/>
 								</div>
 								<div id="second">
-									<FeaturesList classes={classes} search={this.state.search}  onSearch={this.handleSearch} features={features} />
+									<FeaturesList classes={classes} search={this.state.search}  onSearch={this.handleSearch} features={features} onMouseEnter={this.handleMouseEnter} onMouseOut={this.handleMouseOut} />
 								</div>
 							</div>
 
