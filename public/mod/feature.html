@@ -41,7 +41,7 @@
 						<ul>
 							{props.features.map((feature)=>(
 								<li key={feature["_id"]} id="wrapper">
-									{props.search.regex.test(feature.title) && props.classId === feature.classId ?
+									{props.search.regex.test(feature.title) && props.search.classId === feature.classId ?
 									<div>
 										<h3>{feature.title}</h3>
 										{feature.description}<br/>
@@ -187,7 +187,11 @@
 					} else {
 						newSearchTerm = new RegExp("^"+newSearchText,'i');
 					}
-					this.setState({search:{text:newSearchText,regex:newSearchTerm}});
+					this.setState((prevState)=>{
+						prevState.search.text = newSearchText;
+						prevState.search.regex = newSearchTerm;
+						return ({search:prevState.search});
+					});
 				}
 
 				handleSearchClassChange(e) {
