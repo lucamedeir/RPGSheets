@@ -139,10 +139,11 @@ var RoutePlayer = function(request,response,data,PageHandler) {
 	var pClass;
 	var classes;
 	var races;
+	var features;
 	var erro = false;
 	var proceed = true;
 	var serverAccess = 0;
-	const nOfServerAccess = 6;
+	const nOfServerAccess = 7;
 	var sendResponse = false;
 
 	var filePath = "./player.html";
@@ -210,6 +211,16 @@ var RoutePlayer = function(request,response,data,PageHandler) {
 		} else erro = true;
 	});
 
+	globalDB.collection('features').find({}).toArray((err,featureDocs)=>{
+		if(!err) {
+			features = featureDocs;
+			serverAccess++;
+			if(serverAccess == nOfServerAccess) {
+				sendResponse = true;
+			}
+		} else erro = true;
+	});
+
 	var timerHandle = setInterval(()=>{
 		if(erro) {
 			PageHandler(500,response);
@@ -221,7 +232,7 @@ var RoutePlayer = function(request,response,data,PageHandler) {
 			PageHandler(200,response,filePath,(page)=>{
 				player.class = pClass;
 				player.race = pRace;
-				return page.replace(/<SERVER_REPLACE_PLAYER>/g,JSON.stringify(player)).replace(/<SERVER_REPLACE_CLASSES>/g,JSON.stringify(classes)).replace(/<SERVER_REPLACE_RACES>/g,JSON.stringify(races));
+				return page.replace(/<SERVER_REPLACE_PLAYER>/g,JSON.stringify(player)).replace(/<SERVER_REPLACE_CLASSES>/g,JSON.stringify(classes)).replace(/<SERVER_REPLACE_RACES>/g,JSON.stringify(races)).replace(/<SERVER_REPLACE_FEATURES>/g,JSON.stringify(features));
 			});
 			clearInterval(timerHandle);
 		}

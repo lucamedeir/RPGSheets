@@ -19,7 +19,8 @@
 			    padding-right: 1cm;
 			}
 			#second {
-			    overflow: left; /* if you don't want #second to wrap below #first */
+			    float: left; /* if you don't want #second to wrap below #first */
+			    padding-right: 1cm;
 			}
 		</style>
 		
@@ -31,6 +32,7 @@
 			const player = <SERVER_REPLACE_PLAYER>;
 			const classes = <SERVER_REPLACE_CLASSES>;
 			const races = <SERVER_REPLACE_RACES>;
+			const features = <SERVER_REPLACE_FEATURES>;
 
 			const statsDefinition = [
 				{name:"Strength",id:"str"},
@@ -176,6 +178,28 @@
 				else return stat;
 			}
 
+			function FeaturesList(props) {
+				return (
+					<div>
+						<h3>Features</h3>
+						Search: <input onChange={props.onSearch} value={props.search.text}/>
+						<ul>
+							{props.features.map((feature)=>(
+								<li key={feature["_id"]} id="wrapper">
+									{props.search.regex.test(feature.title) && props.search.classId === feature.classId ?
+									<div>
+										{feature.title}
+									</div>
+									:
+									""
+									}
+								</li>
+							))}
+						</ul>
+					</div>
+				);
+			}
+
 			function StatsList(props) {
 				return (
 					<div>
@@ -263,10 +287,6 @@
 				}
 			}
 
-			function SkillsList(props) {
-
-			}
-
 			class Main extends React.Component {
 				constructor(props){
 					super(props);
@@ -275,7 +295,13 @@
 					thePlayer.prf = 2;
 					thePlayer.lvl = 1;
 					thePlayer.modifiableName = props.player.name;
-					this.state = {"player":thePlayer};
+					this.state = {"player":thePlayer,
+						search: {
+							regex:/([A-z])\w+|([A-z])/,
+							text:"",
+							classId:thePlayer.classId,
+							showDescription:false
+						}};
 					this.handleExpChange = this.handleExpChange.bind(this);
 					this.handleNameChange = this.handleNameChange.bind(this);
 					this.handleStatChange = this.handleStatChange.bind(this);
@@ -283,6 +309,7 @@
 					this.handleRaceChange = this.handleRaceChange.bind(this);
 					this.handleClassChange = this.handleClassChange.bind(this);
 					this.handleSubmit = this.handleSubmit.bind(this);
+					this.handleSearch = this.handleSearch.bind(this);
 				}
 
 
@@ -293,6 +320,22 @@
 						prevState.player.prf = expData.prf;
 						
 						return ({player:prevState.player});
+					});
+				}
+
+				handleSearch(e) {
+					var newSearchText = e.currentTarget.value;
+					var newSearchTerm;
+					
+					if(!newSearchText) {
+						newSearchTerm = /([A-z])\w+|([A-z])/;
+					} else {
+						newSearchTerm = new RegExp("^"+newSearchText,'i');
+					}
+					this.setState((prevState)=>{
+						prevState.search.text = newSearchText;
+						prevState.search.regex = newSearchTerm;
+						return ({search:prevState.search});
 					});
 				}
 
@@ -377,13 +420,14 @@
 							if(newClassId === aClass["_id"]) {
 								prevState.player.raceName = aClass.name;
 								prevState.player.classId = aClass["_id"];
+								prevState.search.classId= aClass["_id"];
 								prevState.player.class = aClass;
 								prevState.player.skills = {n:0,types:{}};
 							}
 						});
 
 						
-						return ({form:prevState.form});
+						return ({form:prevState.form,search:prevState.search});
 					});
 				}
 
@@ -453,6 +497,9 @@
 								<div id="second">
 									<SavingThrowsList statusListName={statsDefinition} player={this.state.player} />
 									<SkillsList skillsListName={skillsDefinition} onCheck={this.handleSkillCheck} player={this.state.player}/>
+								</div>
+								<div id="second">
+									<FeaturesList classes={classes} search={this.state.search}  onSearch={this.handleSearch} features={features} />
 								</div>
 							</div>
 
