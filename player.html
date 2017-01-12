@@ -186,7 +186,7 @@
 						<ul>
 							{props.features.map((feature)=>(
 								<li key={feature["_id"]} id="wrapper">
-									{props.search.regex.test(feature.title) && props.search.classId === feature.classId ?
+									{props.search.regex.test(feature.title) && props.search.classId === feature.classId && props.playerLevel >= feature.startingLevel?
 										<div data-id={feature["_id"]}  onMouseEnter={props.onMouseEnter} onMouseOut={props.onMouseOut}>
 											<h5>{feature.title}</h5>
 											{props.search.showDescription && props.search.showId === feature["_id"] ?
@@ -533,7 +533,7 @@
 									<SkillsList skillsListName={skillsDefinition} onCheck={this.handleSkillCheck} player={this.state.player}/>
 								</div>
 								<div id="second">
-									<FeaturesList classes={classes} search={this.state.search}  onSearch={this.handleSearch} features={features} onMouseEnter={this.handleMouseEnter} onMouseOut={this.handleMouseOut} />
+									<FeaturesList classes={classes} search={this.state.search}  onSearch={this.handleSearch} features={features} playerLevel={this.state.player.lvl} onMouseEnter={this.handleMouseEnter} onMouseOut={this.handleMouseOut} />
 								</div>
 							</div>
 
