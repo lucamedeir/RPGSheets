@@ -67,8 +67,7 @@
 							title:"",
 							description:"",
 							classId:"",
-							startingLevel:1,
-							spell:false
+							startingLevel:1
 						},
 						search: {
 							regex:/([A-z])\w+|([A-z])/,
@@ -99,7 +98,7 @@
 					this.handleDelete = this.handleDelete.bind(this);
 					this.handleTextChange = this.handleTextChange.bind(this);
 					this.handleSearch = this.handleSearch.bind(this);
-					this.handleSpellCheck = this.handleSpellCheck.bind(this);
+					this.handleStartingLevel = this.handleStartingLevel.bind(this);
 					this.handleSearchClassChange = this.handleSearchClassChange.bind(this);
 				}
 
@@ -110,7 +109,7 @@
 						description:this.state.form.description,
 						classId:this.state.form.classId,
 						startingLevel:this.state.form.startingLevel,
-						spell:this.state.form.spell
+						startingLevel:this.state.form.startingLevel
 					};
 
 					if(this.state.form.title && this.state.form.description ) {
@@ -129,8 +128,7 @@
 										title:"",
 										description:"",
 										classId:prevState.form.classId,
-										startingLevel:1,
-										spell:false
+										startingLevel:1
 									}
 								}));
 							}
@@ -228,10 +226,10 @@
 					});
 				}
 
-				handleSpellCheck(e) {
-					var checked = e.target.checked;
+				handleStartingLevel(e) {
+					var newStartingLevel = e.target.value;
 					this.setState((prevState)=>{
-						prevState.form.spell = checked;
+						prevState.form.startingLevel = newStartingLevel;
 						return ({form:prevState.form});
 					});
 				}
@@ -248,7 +246,7 @@
 										))}
 									</select><br/>
 									<textarea value={this.state.form.description} onChange={this.handleTextChange} /><br/>
-									Spell: <input type="checkbox" checked={this.state.form.spell} onChange={this.handleSpellCheck} /><br/>
+									Starting Level: <input checked={this.state.form.startingLevel} onChange={this.handleStartingLevel} /><br/>
 									<button>Submit</button>
 								</form>
 							</aside>
