@@ -346,6 +346,17 @@ var RouteApiRace = function(request, response, data, PageHandler) {
 				response.end(JSON.stringify(deleteResults));
 			});
 		break;
+		case 'PATCH':
+			globalDB.collection(collectionName).updateOne(data.query,
+				{
+					$set: data.post,
+					$currentDate: { "lastModified": true }
+				}, 
+				(err,updateResults) =>{
+					response.statusCode = 200;
+					response.end(JSON.stringify(updateResults));
+			});
+		break;
 	};
 };
 
@@ -372,6 +383,17 @@ var RouteApiClass = function(request, response, data, PageHandler) {
 				response.end(JSON.stringify(deleteResults));
 			});
 		break;
+		case 'PATCH':
+			globalDB.collection(collectionName).updateOne(data.query,
+				{
+					$set: data.post,
+					$currentDate: { "lastModified": true }
+				}, 
+				(err,updateResults) =>{
+					response.statusCode = 200;
+					response.end(JSON.stringify(updateResults));
+			});
+		break;
 	};
 };
 
@@ -396,6 +418,17 @@ var RouteApiFeature = function(request, response, data, PageHandler) {
 			globalDB.collection(collectionName).deleteOne(data.query, function(err, deleteResults) {
 				response.statusCode = 200;
 				response.end(JSON.stringify(deleteResults));
+			});
+		break;
+		case 'PATCH':
+			globalDB.collection(collectionName).updateOne(data.query,
+				{
+					$set: data.post,
+					$currentDate: { "lastModified": true }
+				}, 
+				(err,updateResults) =>{
+					response.statusCode = 200;
+					response.end(JSON.stringify(updateResults));
 			});
 		break;
 	};

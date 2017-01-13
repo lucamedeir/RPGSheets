@@ -205,7 +205,9 @@
 							name:"",
 							savThrows:{},
 							allowedSkills:{},
-							nAllowedSkills:0
+							nAllowedSkills:0,
+							hitDice:0,
+							hitPoints:0
 						},
 						search: {
 							regex:/([A-z])\w+|([A-z])/,
@@ -221,6 +223,8 @@
 					this.handleNameChange = this.handleNameChange.bind(this);
 					this.handleDelete = this.handleDelete.bind(this);
 					this.handleSearch = this.handleSearch.bind(this);
+					this.handleHitDice = this.handleHitDice.bind(this);
+					this.handleHitPoints = this.handleHitPoints.bind(this);
 				}
 
 				componentDidMount() {
@@ -236,7 +240,8 @@
 					var data = this.state.form;
 
 					if(this.state.form.name && this.state.form.savThrows && 
-					   this.state.form.allowedSkills && this.state.form.nAllowedSkills) {
+					   this.state.form.allowedSkills && this.state.form.nAllowedSkills &&
+					   this.state.form.hitPoints && this.state.form.hitDice) {
 						fetch('/api/class', {
 							method: 'POST',
 							headers: {
@@ -252,7 +257,9 @@
 										name:"",
 										savThrows:{},
 										allowedSkills:{},
-										nAllowedSkills:0
+										nAllowedSkills:0,
+										hitDice:0,
+										hitPoints:0
 									}
 								}));
 							}
@@ -346,6 +353,22 @@
 					this.setState({search:{text:newSearchText,regex:newSearchTerm}});
 				}
 
+				handleHitDice(e) {
+					var value = e.target.value;
+					this.setState((prevState)=>{
+						prevState.form.hitDice = value;
+						return ({form:prevState.form});
+					});
+				}
+
+				handleHitPoints(e){
+					var value = e.target.value;
+					this.setState((prevState)=>{
+						prevState.form.hitPoints = value;
+						return ({form:prevState.form});
+					});
+				}
+
 				render() {
 					return (
 						<div id="wrapper">
@@ -355,6 +378,8 @@
 									<InputList itemCheck={this.state.form.savThrows} onCheck={this.handleSavChange} input={statsDefinition}/>
 									<InputList itemCheck={this.state.form.allowedSkills} onCheck={this.handleSkillsChange} input={skillsDefinition}/>
 									Number of skills: <input onChange={this.handleNSkillsChange} value={this.state.form.nAllowedSkills} /><br/>
+									Hit dice per level: <input onChange={this.handleHitDice} value={this.state.form.hitDice} /><br/>
+									Initial hit points: <input onChange={this.handleHitPoints} value={this.state.form.hitPoints} /><br/>
 									<button>Submit</button>
 								</form>
 							</aside>
