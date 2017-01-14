@@ -320,6 +320,8 @@
 					this.handleSearch = this.handleSearch.bind(this);
 					this.handleMouseEnter = this.handleMouseEnter.bind(this);
 					this.handleMouseOut = this.handleMouseOut.bind(this);
+					this.handleHitPointsChange = this.handleHitPointsChange.bind(this);
+					this.handleACChange = this.handleACChange.bind(this);
 				}
 
 
@@ -486,7 +488,9 @@
 									raceId: this.state.player.raceId,
 									classId: this.state.player.raceId,
 									stats:this.state.player.stats,
-									skills:this.state.player.skills
+									skills:this.state.player.skills,
+									ac:this.state.player.ac,
+									hitPoints:this.state.player.hitPoints
 								}
 							})
 						}).then((response) =>{
@@ -499,6 +503,28 @@
 							console.log(json);
 						});
 					}
+				}
+
+				handleHitPointsChange(e) {
+					var value = e.target.value;
+
+					this.setState((prevState)=>{
+						prevState.player.hitPoints = value;
+						
+						return ({player:prevState.player});
+					});
+
+				}
+
+				handleACChange(e) {
+					var value = e.target.value;
+
+					this.setState((prevState)=>{
+						prevState.player.ac = value;
+						
+						return ({player:prevState.player});
+					});
+
 				}
 
 				render() {
@@ -520,6 +546,11 @@
 										))}
 									</select>
 									<input data-id="exp" onChange={this.handleExpChange} value={this.state.player.exp}/>
+								</div>
+								<div id="second">
+									Max Hit Points: <input maxLength="3" size="3"  onChange={this.handleHitPointsChange} value={this.state.player.hitPoints} /> => {parseFloat(this.state.player.hitPoints)+parseFloat(this.state.player.class.hitPoints)+parseFloat(this.state.player.lvl)*calculateBonus(limitStat(parseFloat(this.state.player.stats["con"])+parseFloat(this.state.player.race.abilityScoreIncrease["con"])))}<br/>
+									Max Hit Dice: {this.state.player.lvl}d{this.state.player.class.hitDice}<br/>
+									AC: <input maxLength="2" size="2"  onChange={this.handleACChange} value={this.state.player.ac} />
 								</div>
 							</div>
 							
