@@ -268,6 +268,7 @@ var RouteApiWorld = function(request, response, data, PageHandler) {
 					$set: data.post,
 					$currentDate: { "lastModified": true }
 				}, 
+				{"multi":true},
 				(err,worldUpdateResults) =>{
 					globalDB.collection("players").updateMany({"worldName":data.query.name},
 						{
@@ -315,6 +316,7 @@ var RouteApiPlayer = function(request, response, data, PageHandler) {
 					$set: data.post,
 					$currentDate: { "lastModified": true }
 				}, 
+				{"multi":true},
 				(err,updateResults) =>{
 					response.statusCode = 200;
 					response.end(JSON.stringify(updateResults));
@@ -352,6 +354,7 @@ var RouteApiRace = function(request, response, data, PageHandler) {
 					$set: data.post,
 					$currentDate: { "lastModified": true }
 				}, 
+				{"multi":true},
 				(err,updateResults) =>{
 					response.statusCode = 200;
 					response.end(JSON.stringify(updateResults));
@@ -389,6 +392,7 @@ var RouteApiClass = function(request, response, data, PageHandler) {
 					$set: data.post,
 					$currentDate: { "lastModified": true }
 				}, 
+				{"multi":true},
 				(err,updateResults) =>{
 					response.statusCode = 200;
 					response.end(JSON.stringify(updateResults));
@@ -426,6 +430,33 @@ var RouteApiFeature = function(request, response, data, PageHandler) {
 					$set: data.post,
 					$currentDate: { "lastModified": true }
 				}, 
+				{"multi":true},
+				(err,updateResults) =>{
+					response.statusCode = 200;
+					response.end(JSON.stringify(updateResults));
+			});
+		break;
+	};
+};
+
+var RouteApiFeatures = function(request, response, data, PageHandler) {
+	collectionName = "features";
+	response.setHeader('Content-Type', 'application/json');
+	var requestUrl = url.parse(request.url,true);
+	switch(request.method) {
+		case 'POST':
+			globalDB.collection(collectionName).insertMany(data.post,(err,postResults)=>{
+				response.statusCode = 201;
+				response.end(JSON.stringify(postResults));
+			});
+		break;
+		case 'PATCH':
+			globalDB.collection(collectionName).update(data.query,
+				{
+					$set: data.post,
+					$currentDate: { "lastModified": true }
+				}, 
+				{"multi":true},
 				(err,updateResults) =>{
 					response.statusCode = 200;
 					response.end(JSON.stringify(updateResults));
@@ -447,6 +478,7 @@ router.add(/^\/$/,RouteIndex);
 router.add(/^\/\w+$/,RouteWorld);
 router.add(/^\/(?!(api))\w+\/\w+$/,RoutePlayer);
 router.add(/^\/api\/feature$/,RouteApiFeature);
+router.add(/^\/api\/features$/,RouteApiFeatures);
 router.add(/^\/api\/world$/,RouteApiWorld);
 router.add(/^\/api\/player$/,RouteApiPlayer);
 router.add(/^\/api\/class$/,RouteApiClass);
